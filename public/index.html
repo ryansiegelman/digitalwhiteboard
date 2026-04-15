@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Down Dog Lodge — Going Home</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Down Dog Lodge — Going Home</h1>
+  <div id="dog-container"></div>
+  <audio id="ding-sound" src="ding.mp3" preload="auto"></audio>
+
+  <script>
+    let lastReservationId = null;
+
+    async function loadDogs() {
+      try {
+        const res = await fetch('/dogs?_=' + new Date().getTime());
+        const dogs = await res.json();
+        const container = document.getElementById('dog-container');
+        container.innerHTML = '';
+
+        // Get latest reservation ID Jose
+        const latestReservationId = dogs.length > 0 ? dogs[0].appointmentId : null;
+        const isNewCheckout = latestReservationId !== lastReservationId;
+        if (isNewCheckout && dogs.length > 0) {
+          document.getElementById('ding-sound').play();
+        }
+        lastReservationId = latestReservationId;
+
+        const dogsToHighlight = dogs.filter(dog => dog.appointmentId === latestReservationId);
+
+        dogs.forEach(dog => {
+          const card = document.createElement('div');
+          card.className = 'dog-card';
+          const checkoutTime = new Date(dog.checkOutTime);
+          const secondsSinceCheckout = (Date.now() - checkoutTime.getTime()) / 1000;
+
+          if (secondsSinceCheckout <= 60) {
+            card.classList.add('highlight');
+          }
+
+          const img = document.createElement('img');
+          img.src = dog.imageUrl || '/placeholder.jpg';
+          img.alt = dog.name;
+
+          const name = document.createElement('p');
+          name.textContent = dog.name;
+
+          const timer = document.createElement('p');
+          timer.className = 'timer';
+          timer.setAttribute('data-checkout', dog.checkOutTime);
+
+          const type = document.createElement('p');
+          type.className = 'service-type';
+          type.textContent = dog.serviceItemType || '';
+
+          card.appendChild(img);
+          card.appendChild(name);
+          card.appendChild(timer);
+          card.appendChild(type);
+          container.appendChild(card);
+        });
+
+        updateTimers();
+      } catch (err) {
+        console.error('Failed to load dogs:', err);
+      }
+    }
+
+    function updateTimers() {
+      const timers = document.querySelectorAll('.timer');
+      const now = new Date();
+
+      timers.forEach(timer => {
+        const checkoutTime = new Date(timer.getAttribute('data-checkout'));
+        const diffMin = Math.floor((now - checkoutTime) / 60000);
+        timer.textContent = `${diffMin} min. ago`;
+      });
+    }
+
+    loadDogs();
+    setInterval(updateTimers, 5000);
+    setInterval(loadDogs, 5000);
+  </script>
+</body>
+</html>
