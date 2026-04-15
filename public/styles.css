@@ -1,0 +1,102 @@
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 3rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+#dog-container {
+  flex: 1;
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  align-items: center;
+  justify-items: center;
+}
+
+#dog-container .dog-card:last-child {
+  width: 33%;
+  max-width: none; /* Override the max-width for the last child */
+}
+
+#dog-container .dog-card:not(:last-child) {
+  width: calc(67% / 2); /* Distribute the remaining width among other cards, assuming a two-column layout */
+  max-width: none; /* Override max-width for other cards as well */
+}
+
+.dog-card {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  width: 95%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(255,255,255,0.1);
+  margin: 3px;
+}
+
+
+
+.dog-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  max-height: 60vh;
+
+}
+
+.dog-card p {
+  margin: 0.25rem 0;
+  font-size: 2rem;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+.timer {
+  color: #32cd32;
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.service-type {
+  color: #ffa500;
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.highlight {
+  border: 5px solid orange;
+  animation: pulse 2s infinite;
+}
+
+.dog-card {
+  margin: 0;
+}
+
+.dog-card:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255,165,0, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255,165,0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,165,0, 0); }
+}
