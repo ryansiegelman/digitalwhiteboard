@@ -1,5 +1,5 @@
 const DEFAULT_LOCATIONS = [
-  { slug: 'el-segundo', id: process.env.BUSINESS_ID || 'biz0XLw', name: 'El Segundo' }
+  { slug: 'el-segundo', id: process.env.BUSINESS_ID || 'bizypEi', name: 'El Segundo' }
 ];
 
 function parseLocations() {
@@ -16,10 +16,10 @@ function parseLocations() {
 
 module.exports = {
   AUTH_KEY: process.env.AUTH_KEY || 'ZTBiYjdkYTItNjYxYy00OTdiLTk2ZjgtM2ZjMzk1ZWI3MzU2',
-  COMPANY_ID: process.env.COMPANY_ID || 'copyX9j',
-  BUSINESS_ID: process.env.BUSINESS_ID || 'biz0XLw',
+  COMPANY_ID: process.env.COMPANY_ID || 'copnLAK',
+  BUSINESS_ID: process.env.BUSINESS_ID || 'bizypEi',
   POLL_INTERVAL_MS: parseInt(process.env.POLL_INTERVAL_MS) || 10000,
-  DOG_CHECKED_BEFORE: parseInt(process.env.DOG_CHECKED_BEFORE) || 36,
+  DOG_CHECKED_BEFORE: parseFloat(process.env.DOG_CHECKED_BEFORE) || 36,
   PORT: parseInt(process.env.PORT) || 3000,
   WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || '',
   WEBHOOK_MODE: process.env.WEBHOOK_MODE || 'poll',
