@@ -93,12 +93,11 @@
       gap: 0.9rem;
     }
 
-    .brand h1 {
-      font-family: var(--font-display);
-      font-size: 2.25rem;
-      font-weight: 400;
-      letter-spacing: 0.01em;
-      line-height: 1;
+    .brand-logo {
+      height: 3.2rem;
+      width: auto;
+      filter: invert(1);
+      opacity: 0.92;
     }
 
     .brand-divider {
@@ -615,41 +614,9 @@
 <body>
   <header class="header">
     <div class="brand">
-      <h1 id="brand-title">Loading...</h1>
+      <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
       <span class="brand-divider"></span>
       <span class="subtitle">Going Home</span>
-    </div>
-    <div class="controls">
-      <nav class="location-nav" id="location-nav">
-        <!-- buttons injected by initDashboard() -->
-      </nav>
-      <div class="filter-wrap">
-        <button class="filter-toggle" id="filter-button">
-          <span id="filter-text">All Services</span>
-          <span class="filter-badge" id="filter-count">4</span>
-          <svg class="filter-chevron" viewBox="0 0 14 14" fill="none">
-            <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="filter-panel" id="filter-menu">
-          <div class="filter-option">
-            <input type="checkbox" id="filter-daycare" value="DAYCARE" checked>
-            <label for="filter-daycare">Daycare</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="filter-boarding" value="BOARDING" checked>
-            <label for="filter-boarding">Boarding</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="filter-grooming" value="GROOMING" checked>
-            <label for="filter-grooming">Grooming</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="filter-evaluation" value="EVALUATION" checked>
-            <label for="filter-evaluation">Evaluation</label>
-          </div>
-        </div>
-      </div>
     </div>
   </header>
 
@@ -670,54 +637,7 @@
     let allDogs = [];
     let lastRenderedIds = '';
 
-    // ─── Filter Dropdown ───
-    const filterButton = document.getElementById('filter-button');
-    const filterMenu = document.getElementById('filter-menu');
-    const filterCheckboxes = filterMenu.querySelectorAll('input[type="checkbox"]');
-
-    filterButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      filterMenu.classList.toggle('open');
-      filterButton.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!filterMenu.contains(e.target) && !filterButton.contains(e.target)) {
-        filterMenu.classList.remove('open');
-        filterButton.classList.remove('active');
-      }
-    });
-
-    filterMenu.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-
-    filterCheckboxes.forEach(cb => {
-      cb.addEventListener('change', () => {
-        updateFilterDisplay();
-        lastRenderedIds = '';
-        renderDogs();
-      });
-    });
-
-    function updateFilterDisplay() {
-      const checked = Array.from(filterCheckboxes).filter(cb => cb.checked);
-      const count = checked.length;
-      const filterText = document.getElementById('filter-text');
-      const filterCount = document.getElementById('filter-count');
-
-      filterCount.textContent = count;
-
-      if (count === 0) {
-        filterText.textContent = 'No Services';
-      } else if (count === filterCheckboxes.length) {
-        filterText.textContent = 'All Services';
-      } else if (count === 1) {
-        filterText.textContent = checked[0].nextElementSibling.textContent;
-      } else {
-        filterText.textContent = count + ' Services';
-      }
-    }
+    // ─── (Filter removed) ───
 
     // ─── Data Loading ───
     async function loadDogs() {
@@ -822,9 +742,7 @@
     // ─── Rendering ───
     function renderDogs() {
       const container = document.getElementById('dog-container');
-      const checked = Array.from(filterCheckboxes).filter(cb => cb.checked);
-      const selectedTypes = checked.map(cb => cb.value);
-      const filteredDogs = allDogs.filter(dog => selectedTypes.includes(dog.serviceItemType));
+      const filteredDogs = allDogs;
 
       const currentIds = filteredDogs.map(d => d.appointmentId).join(',');
       const shouldAnimate = currentIds !== lastRenderedIds;
@@ -839,7 +757,7 @@
 
       if (filteredDogs.length === 0) {
         container.innerHTML =
-          '<div class="empty-state"><p class="empty-title">No dogs going home yet</p><p class="empty-sub">Adjust filters or check back soon</p></div>';
+          '<div class="empty-state"><p class="empty-title">No dogs going home yet</p><p class="empty-sub">Check back soon</p></div>';
         return;
       }
 
@@ -912,29 +830,8 @@
         const slugs = Object.keys(locations);
         if (slugs.length === 0) throw new Error('No locations configured');
 
-        const nav = document.getElementById('location-nav');
-        slugs.forEach((slug, i) => {
-          const btn = document.createElement('button');
-          btn.className = 'loc-btn' + (i === 0 ? ' active' : '');
-          btn.dataset.location = slug;
-          btn.textContent = locations[slug].name;
-          btn.addEventListener('click', () => {
-            document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentLocation = slug;
-            document.getElementById('brand-title').textContent =
-              businessName + ' \u2014 ' + locations[slug].name;
-            lastReservationId = null;
-            lastRenderedIds = '';
-            loadDogs();
-          });
-          nav.appendChild(btn);
-        });
-
         currentLocation = slugs[0];
         document.title = businessName + ' \u2014 Going Home';
-        document.getElementById('brand-title').textContent =
-          businessName + ' \u2014 ' + locations[slugs[0]].name;
 
         loadDogs();
         setInterval(updateTimers, 5000);
