@@ -59,7 +59,7 @@
       z-index: 0;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Header ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Header  */
     .header {
       position: relative;
       padding: 1.1rem 2rem;
@@ -116,7 +116,7 @@
       padding-top: 0.1rem;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Header clock ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Header clock  */
     .datetime {
       display: flex;
       flex-direction: column;
@@ -140,7 +140,7 @@
       color: var(--text-secondary);
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Main Container (two panels) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Main Container (two panels)  */
     #main-container {
       flex: 1;
       display: flex;
@@ -188,7 +188,7 @@
       min-height: 0;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Dog Cards ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Dog Cards  */
     .dog-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -337,7 +337,7 @@
       max-height: 100%;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Dogs Grid (smaller cards beyond the featured) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Dogs Grid (smaller cards beyond the featured)  */
     .dogs-grid {
       flex: 1;
       display: grid;
@@ -349,7 +349,7 @@
       align-content: stretch;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Highlight (recent activity glow) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Highlight (recent activity glow)  */
     .panel-checkout .dog-card.highlight {
       border-color: var(--accent);
       animation: glow-pulse-checkout 2.5s ease-in-out infinite;
@@ -370,7 +370,7 @@
       50% { box-shadow: 0 0 24px 2px rgba(237, 232, 223, 0.14); }
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Card entrance ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Card entrance  */
     .animate-in {
       animation: card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
       animation-delay: calc(var(--i, 0) * 0.07s);
@@ -381,25 +381,26 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Empty & Loading ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Empty & Loading  */
     .empty-state,
     .loading-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      flex: 1;
       width: 100%;
-      gap: 0.4rem;
-      padding: 1.5rem;
+      height: 100%;
       text-align: center;
     }
 
     .empty-check {
-      display: inline-block;
-      font-size: 6rem;
+      display: block;
+      font-size: 8rem;
       line-height: 1;
       color: #ffffff;
-      font-weight: 400;
+      font-weight: 300;
+      text-align: center;
     }
 
     .loading-state {
@@ -408,7 +409,7 @@
       letter-spacing: 0.03em;
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Responsive ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /*  Responsive  */
     @media (max-width: 1200px) {
       #main-container {
         flex-direction: column;
@@ -463,7 +464,7 @@
     </div>
     <div class="datetime" id="datetime">
       <span class="dt-time" id="dt-time">--:--</span>
-      <span class="dt-date" id="dt-date">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ</span>
+      <span class="dt-date" id="dt-date"></span>
     </div>
   </header>
 
@@ -471,14 +472,14 @@
     <section class="panel panel-checkin" id="panel-checkin">
       <h2 class="panel-header">Checking In</h2>
       <div class="panel-content" id="checkin-content">
-        <div class="loading-state"><span class="empty-check">Ã¢ÂÂ</span></div>
+        <div class="loading-state"><span class="empty-check">&#10003;</span></div>
       </div>
     </section>
 
     <section class="panel panel-checkout" id="panel-checkout">
       <h2 class="panel-header">Checking Out</h2>
       <div class="panel-content" id="checkout-content">
-        <div class="loading-state"><span class="empty-check">Ã¢ÂÂ</span></div>
+        <div class="loading-state"><span class="empty-check">&#10003;</span></div>
       </div>
     </section>
   </main>
@@ -503,7 +504,7 @@
     let lastRenderedCheckout = '';
     let lastRenderedCheckin = '';
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Data Loading ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Data Loading 
     async function fetchList(endpoint) {
       if (DEMO_MODE) return demoList(endpoint);
       try {
@@ -545,7 +546,7 @@
       }
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Demo data ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Demo data 
     function demoList(endpoint) {
       const now = Date.now();
       const min = (n) => new Date(now - n * 60000).toISOString();
@@ -630,7 +631,7 @@
       renderPanel('checkout-content', checkouts, 'checkOutTime', 'Checking Out', 'lastRenderedCheckout');
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Card Creation ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Card Creation 
     function createDogCard(dog, isFeatured, timeField, featureLabelText) {
       const card = document.createElement('article');
       card.className = 'dog-card';
@@ -708,7 +709,7 @@
       return s.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Rendering ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Rendering 
     const renderState = { lastRenderedCheckin: '', lastRenderedCheckout: '' };
 
     function renderPanel(containerId, dogs, timeField, featureLabelText, stateKey) {
@@ -749,7 +750,7 @@
       updateTimers();
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Timer Updates ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Timer Updates 
     function updateTimers() {
       const now = Date.now();
       let staleFound = false;
@@ -788,7 +789,7 @@
       try { document.getElementById('ding-sound').play().catch(() => {}); } catch {}
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Header clock ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Header clock 
     function updateClock() {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-US', {
@@ -807,7 +808,7 @@
       if (dEl) dEl.textContent = dateStr;
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Periodic prune (drops anything that crossed the 10-min line without a server poke) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Periodic prune (drops anything that crossed the 10-min line without a server poke) 
     function periodicPrune() {
       // The render keys are reset so the next loadAll will rebuild based on
       // the freshly-filtered list. We also force a re-render now so cards
@@ -819,7 +820,7 @@
       loadAll();
     }
 
-    // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Init ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+    //  Init 
     async function initDashboard() {
       try {
         if (DEMO_MODE) {
@@ -849,9 +850,9 @@
       } catch (err) {
         console.error('init error:', err);
         document.getElementById('checkin-content').innerHTML =
-          '<div class="empty-state"><span class="empty-check">Ã¢ÂÂ</span></div>';
+          '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
         document.getElementById('checkout-content').innerHTML =
-          '<div class="empty-state"><span class="empty-check">Ã¢ÂÂ</span></div>';
+          '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
       }
     }
 
@@ -861,7 +862,7 @@
       document.getElementById('ding-sound').load();
     }, { once: true });
 
-    // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Debug overlay (Ctrl+Shift+D) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+    //  Debug overlay (Ctrl+Shift+D) 
     (function() {
       let debugVisible = false;
       let debugEl = null;
