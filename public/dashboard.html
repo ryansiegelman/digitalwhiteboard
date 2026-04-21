@@ -157,7 +157,7 @@
       flex-direction: column;
       flex-grow: var(--weight, 1);
       flex-basis: 0;
-      min-width: 220px;
+      min-width: 340px;
       overflow: hidden;
       transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       border: 2px solid var(--text);
@@ -490,6 +490,9 @@
     const POLL_INTERVAL_MS = 5000;
     const TIMER_INTERVAL_MS = 5000;
 
+    // Demo mode: visit /dashboard.html?demo=1 to see the dashboard with sample dogs
+    const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
+
     let currentLocation = null;
     let lastCheckoutId = null;
     let lastCheckinId = null;
@@ -498,6 +501,7 @@
 
     // ─── Data Loading ───
     async function fetchList(endpoint) {
+      if (DEMO_MODE) return demoList(endpoint);
       try {
         const res = await fetch(`${API_BASE_URL}/${endpoint}?location=${currentLocation}&_=${Date.now()}`);
         if (!res.ok) return [];
@@ -507,6 +511,32 @@
         console.error(`Failed to load ${endpoint}:`, err);
         return [];
       }
+    }
+
+    // ─── Demo data ───
+    function demoList(endpoint) {
+      const now = Date.now();
+      const min = (n) => new Date(now - n * 60000).toISOString();
+      const photo = (id) => `https://placedog.net/640/640?id=${id}`;
+
+      if (endpoint === 'checkins') {
+        return [
+          { appointmentId: 'demo-in-1', name: 'Cheddar',  ownerLastName: 'Siegelman', imageUrl: photo(1),  serviceItemType: 'BOARDING',  checkInTime: min(1) },
+          { appointmentId: 'demo-in-2', name: 'Biscuit',  ownerLastName: 'Harper',    imageUrl: photo(2),  serviceItemType: 'DAYCARE',   checkInTime: min(3) },
+          { appointmentId: 'demo-in-3', name: 'Mango',    ownerLastName: 'Nguyen',    imageUrl: photo(3),  serviceItemType: 'EVALUATION',checkInTime: min(5) },
+          { appointmentId: 'demo-in-4', name: 'Pepper',   ownerLastName: 'Kim',       imageUrl: photo(4),  serviceItemType: 'DAYCARE',   checkInTime: min(7) },
+          { appointmentId: 'demo-in-5', name: 'Juno',     ownerLastName: 'Alvarez',   imageUrl: photo(5),  serviceItemType: 'BOARDING',  checkInTime: min(9) }
+        ];
+      }
+      if (endpoint === 'dogs') {
+        return [
+          { appointmentId: 'demo-out-1', name: 'Maverick', ownerLastName: 'Patel',   imageUrl: photo(6),  serviceItemType: 'DAYCARE',  checkOutTime: min(1) },
+          { appointmentId: 'demo-out-2', name: 'Luna',     ownerLastName: 'Johnson', imageUrl: photo(7),  serviceItemType: 'BOARDING', checkOutTime: min(4) },
+          { appointmentId: 'demo-out-3', name: 'Scout',    ownerLastName: 'Brooks',  imageUrl: photo(8),  serviceItemType: 'DAYCARE',  checkOutTime: min(6) },
+          { appointmentId: 'demo-out-4', name: 'Olive',    ownerLastName: 'Chen',    imageUrl: photo(9),  serviceItemType: 'GROOMING', checkOutTime: min(8) }
+        ];
+      }
+      return [];
     }
 
     function filterRecent(dogs, timeField) {
@@ -771,16 +801,21 @@
     // ─── Init ───
     async function initDashboard() {
       try {
-        const res = await fetch(API_BASE_URL + '/locations');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const businessName = data.businessName || 'Pet Facility';
-        const locations = data.locations || {};
-        const slugs = Object.keys(locations);
-        if (slugs.length === 0) throw new Error('No locations configured');
+        if (DEMO_MODE) {
+          currentLocation = 'demo';
+          document.title = 'Down Dog Lodge \u2014 Demo';
+        } else {
+          const res = await fetch(API_BASE_URL + '/locations');
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          const businessName = data.businessName || 'Pet Facility';
+          const locations = data.locations || {};
+          const slugs = Object.keys(locations);
+          if (slugs.length === 0) throw new Error('No locations configured');
 
-        currentLocation = slugs[0];
-        document.title = businessName + ' \u2014 Live Board';
+          currentLocation = slugs[0];
+          document.title = businessName + ' \u2014 Live Board';
+        }
 
         updateClock();
         setInterval(updateClock, 1000);
@@ -791,10 +826,11 @@
         // Re-evaluate the 10-minute window every 30s so stale cards leave on time
         setInterval(periodicPrune, 30 * 1000);
       } catch (err) {
+        console.error('init error:', err);
         document.getElementById('checkin-content').innerHTML =
-          '<div class="empty-state"><p class="empty-title">Configuration error</p>' +
-          '<p class="empty-sub">' + err.message + '</p></div>';
-        document.getElementById('checkout-content').innerHTML = '';
+          '<div class="empty-state"><span class="empty-check">✓</span></div>';
+        document.getElementById('checkout-content').innerHTML =
+          '<div class="empty-state"><span class="empty-check">✓</span></div>';
       }
     }
 
