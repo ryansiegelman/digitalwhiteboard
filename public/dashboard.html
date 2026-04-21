@@ -578,14 +578,21 @@
       // Resize panels based on count + time-of-day bias.
       //   6am - 2pm → Checking In is the prominent side
       //   3pm - 10pm → Checking Out is the prominent side
+      //   If both sides are empty → 50/50
       const hour = new Date().getHours();
       const checkinPrime  = hour >= 6  && hour < 14;
       const checkoutPrime = hour >= 15 && hour < 22;
 
-      let wCheckin  = checkins.length  > 0 ? checkins.length  : 0.18;
-      let wCheckout = checkouts.length > 0 ? checkouts.length : 0.18;
-      if (checkinPrime)  wCheckin  += 3;
-      if (checkoutPrime) wCheckout += 3;
+      let wCheckin, wCheckout;
+      if (checkins.length === 0 && checkouts.length === 0) {
+        wCheckin = 1;
+        wCheckout = 1;
+      } else {
+        wCheckin  = checkins.length  > 0 ? checkins.length  : 0.18;
+        wCheckout = checkouts.length > 0 ? checkouts.length : 0.18;
+        if (checkinPrime)  wCheckin  += 3;
+        if (checkoutPrime) wCheckout += 3;
+      }
 
       document.getElementById('panel-checkin').style.setProperty('--weight', wCheckin);
       document.getElementById('panel-checkout').style.setProperty('--weight', wCheckout);
