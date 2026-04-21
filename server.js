@@ -31,6 +31,37 @@ for (const loc of config.LOCATIONS) { LOCATIONS[loc.slug] = { id: loc.id, name: 
 const BUSINESS_ID_TO_LOCATION = {};
 for (const [key, loc] of Object.entries(LOCATIONS)) { BUSINESS_ID_TO_LOCATION[loc.id] = key; }
 
+// ─── Owner last-name extractor ───
+// MoeGo has shifted field names over time; try several defensively.
+function extractOwnerLastName(appointment, detail) {
+  const pet = detail?.pet || {};
+  const candidates = [
+    appointment?.customer?.lastName,
+    appointment?.customer?.familyName,
+    appointment?.customer?.name,
+    appointment?.customer?.fullName,
+    appointment?.owner?.lastName,
+    appointment?.owner?.name,
+    appointment?.petOwner?.lastName,
+    appointment?.petOwner?.name,
+    pet?.owner?.lastName,
+    pet?.owner?.name,
+    pet?.customer?.lastName,
+    pet?.customer?.name,
+    detail?.customer?.lastName,
+    detail?.customer?.name,
+  ];
+  for (const c of candidates) {
+    if (!c) continue;
+    const s = String(c).trim();
+    if (!s) continue;
+    // If it looks like a full name, take the last token
+    const parts = s.split(/\s+/);
+    return parts[parts.length - 1];
+  }
+  return '';
+}
+
 // ─── Checkouts (existing) ───
 app.get('/dogs', (req, res) => {
   const location = req.query.location || 'default';
@@ -136,6 +167,7 @@ function updateDogsFromWebhook(appointment) {
   if (!checkOutTime) return;
   const newDogs = (appointment.petServiceDetails || []).map(detail => ({
     name: detail.pet?.name || 'Unknown', imageUrl: detail.pet?.photo || '',
+    ownerLastName: extractOwnerLastName(appointment, detail),
     checkOutTime, appointmentId: appointment.id,
     serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || ''
   }));
@@ -153,6 +185,7 @@ function updateCheckinsFromWebhook(appointment) {
   if (!checkInTime) return;
   const newDogs = (appointment.petServiceDetails || []).map(detail => ({
     name: detail.pet?.name || 'Unknown', imageUrl: detail.pet?.photo || '',
+    ownerLastName: extractOwnerLastName(appointment, detail),
     checkInTime, appointmentId: appointment.id,
     serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || ''
   }));
@@ -208,7 +241,7 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
       const checkOutTime = appointment.checkOutTime;
       (appointment.petServiceDetails || []).forEach(detail => {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: pet.photo, checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
+        dogs.push({ name: pet.name, imageUrl: pet.photo, ownerLastName: extractOwnerLastName(appointment, detail), checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
       });
     });
     dogs.sort((a, b) => new Date(b.checkOutTime) - new Date(a.checkOutTime));
@@ -243,7 +276,7 @@ async function fetchCheckinsForLocation(businessId, fileName) {
       if (!checkInTime) return;
       (appointment.petServiceDetails || []).forEach(detail => {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: pet.photo, checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
+        dogs.push({ name: pet.name, imageUrl: pet.photo, ownerLastName: extractOwnerLastName(appointment, detail), checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
       });
     });
     dogs.sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime));

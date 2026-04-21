@@ -23,8 +23,8 @@
       --accent-glow: rgba(237, 232, 223, 0.35);
       --checkin-color: #ede8df;
       --checkin-glow: rgba(237, 232, 223, 0.35);
-      --ddl-blue: #6aa6e0;
-      --timer-color: #6aa6e0;
+      --ddl-blue: #1e3a6b;
+      --timer-color: #4a6fa5;
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 20px;
@@ -160,15 +160,19 @@
       min-width: 220px;
       overflow: hidden;
       transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      border: 2px solid var(--text);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1rem;
+      background: rgba(255, 255, 255, 0.01);
     }
 
     .panel-header {
       text-align: center;
-      font-size: 1.05rem;
+      font-size: 2.2rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.22em;
-      padding: 0.4rem 0 0.9rem;
+      letter-spacing: 0.18em;
+      padding: 0.2rem 0 0.8rem;
       flex-shrink: 0;
       white-space: nowrap;
     }
@@ -190,8 +194,8 @@
     .dog-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      padding: 0.6rem;
+      border-radius: var(--radius-lg);
+      padding: 0.25rem;
       display: flex;
       flex-direction: column;
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -207,7 +211,7 @@
     .dog-photo {
       position: relative;
       overflow: hidden;
-      border-radius: calc(var(--radius-xl) - 4px);
+      border-radius: calc(var(--radius-lg) - 4px);
       flex: 1;
       min-height: 0;
       background: var(--surface-raised);
@@ -219,8 +223,8 @@
     .dog-photo img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      object-position: center center;
+      object-fit: cover;
+      object-position: center 28%;
       display: block;
       background: var(--surface-raised);
     }
@@ -252,18 +256,18 @@
       display: inline-block;
       padding: 0.2rem 0.75rem;
       border-radius: 999px;
-      border: 1px solid var(--border-light);
-      background: var(--surface-raised);
+      border: 1px solid var(--ddl-blue);
+      background: var(--ddl-blue);
       font-size: 0.95rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--ddl-blue);
+      color: var(--text);
     }
 
     .panel-checkin .service-type,
     .panel-checkout .service-type {
-      color: var(--ddl-blue);
+      color: var(--text);
     }
 
     .feature-label {
@@ -284,43 +288,44 @@
       color: var(--text);
       line-height: 1;
       text-transform: uppercase;
+      font-size: 1.75rem;
+    }
+
+    .owner-last {
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: -0.1rem;
     }
 
     .timer {
-      font-size: 1.4rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: var(--timer-color);
     }
 
     .meta-dot {
       color: var(--text-muted);
-      font-size: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .feature-label {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
     }
 
     /* Featured card (largest, leftmost in each panel) */
     .dog-card.featured {
       flex: 0 0 42%;
-    }
-
-    .dog-card.featured .dog-name {
-      font-size: 2.8rem;
-    }
-
-    .dog-card.featured .timer {
-      font-size: 1.7rem;
-    }
-
-    .dog-card.featured .meta-dot {
-      font-size: 1.4rem;
-    }
-
-    .dog-card.featured .service-type {
-      font-size: 1.15rem;
-      padding: 0.3rem 1rem;
-    }
-
-    .dog-card.featured .feature-label {
-      font-size: 0.95rem;
     }
 
     /* Solo (only one dog in panel) */
@@ -338,23 +343,6 @@
       gap: 1rem;
       min-width: 0;
       align-content: stretch;
-    }
-
-    .dogs-grid .dog-name {
-      font-size: 1.7rem;
-    }
-
-    .dogs-grid .timer {
-      font-size: 1.2rem;
-    }
-
-    .dogs-grid .service-type {
-      font-size: 0.75rem;
-      padding: 0.15rem 0.55rem;
-    }
-
-    .dogs-grid .feature-label {
-      display: none;
     }
 
     /* ─── Highlight (recent activity glow) ─── */
@@ -402,15 +390,12 @@
       text-align: center;
     }
 
-    .empty-title {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      color: var(--text-secondary);
-    }
-
-    .empty-sub {
-      font-size: 0.9rem;
+    .empty-check {
+      display: inline-block;
+      font-size: 2rem;
+      line-height: 1;
       color: var(--text-muted);
+      font-weight: 400;
     }
 
     .loading-state {
@@ -451,11 +436,7 @@
         gap: 0.75rem;
       }
 
-      .dog-card.featured .dog-name {
-        font-size: 1.8rem;
-      }
-
-      .dogs-grid .dog-name {
+      .dog-name {
         font-size: 1.3rem;
       }
 
@@ -486,14 +467,14 @@
     <section class="panel panel-checkin" id="panel-checkin">
       <h2 class="panel-header">Checking In</h2>
       <div class="panel-content" id="checkin-content">
-        <div class="loading-state">Loading…</div>
+        <div class="loading-state"><span class="empty-check">✓</span></div>
       </div>
     </section>
 
     <section class="panel panel-checkout" id="panel-checkout">
       <h2 class="panel-header">Checking Out</h2>
       <div class="panel-content" id="checkout-content">
-        <div class="loading-state">Loading…</div>
+        <div class="loading-state"><span class="empty-check">✓</span></div>
       </div>
     </section>
   </main>
@@ -607,12 +588,10 @@
       const info = document.createElement('div');
       info.className = 'dog-info';
 
-      if (isFeatured) {
-        const label = document.createElement('span');
-        label.className = 'feature-label';
-        label.textContent = featureLabelText;
-        info.appendChild(label);
-      }
+      const label = document.createElement('span');
+      label.className = 'feature-label';
+      label.textContent = featureLabelText;
+      info.appendChild(label);
 
       const nameRow = document.createElement('div');
       nameRow.className = 'dog-name-row';
@@ -633,6 +612,13 @@
       nameRow.appendChild(dot1);
       nameRow.appendChild(timer);
       info.appendChild(nameRow);
+
+      if (dog.ownerLastName) {
+        const owner = document.createElement('div');
+        owner.className = 'owner-last';
+        owner.textContent = dog.ownerLastName;
+        info.appendChild(owner);
+      }
 
       const serviceRow = document.createElement('div');
       serviceRow.className = 'dog-service-row';
@@ -681,9 +667,8 @@
       container.innerHTML = '';
 
       if (dogs.length === 0) {
-        const sub = featureLabelText === 'Checking In' ? 'No recent check-ins' : 'No recent check-outs';
         container.innerHTML =
-          `<div class="empty-state"><p class="empty-title">Up To Date</p><p class="empty-sub">${sub}</p></div>`;
+          `<div class="empty-state"><span class="empty-check">✓</span></div>`;
         return;
       }
 
@@ -716,10 +701,19 @@
     // ─── Timer Updates ───
     function updateTimers() {
       const now = Date.now();
+      let staleFound = false;
       document.querySelectorAll('.timer').forEach(timer => {
         const t = new Date(timer.getAttribute('data-time')).getTime();
         const diffMs = now - t;
         const diffMin = Math.floor(diffMs / 60000);
+
+        if (diffMs >= VISIBLE_WINDOW_MS) {
+          // Safety net: if a card ever exceeds the 10-min window, force a prune.
+          staleFound = true;
+          const card = timer.closest('.dog-card');
+          if (card) card.remove();
+          return;
+        }
 
         if (diffMin <= 0) timer.textContent = 'Just now';
         else if (diffMin === 1) timer.textContent = '1 min ago';
@@ -731,6 +725,12 @@
           else card.classList.remove('highlight');
         }
       });
+      if (staleFound) {
+        // Reset render state so the next poll fully rebuilds (fills empty states, etc.)
+        renderState.lastRenderedCheckin = '';
+        renderState.lastRenderedCheckout = '';
+        loadAll();
+      }
     }
 
     function playDing() {
