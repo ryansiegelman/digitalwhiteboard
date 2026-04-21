@@ -288,29 +288,29 @@
       color: var(--text);
       line-height: 1;
       text-transform: uppercase;
-      font-size: 1.75rem;
+      font-size: 2.6rem;
+      text-align: center;
     }
 
     .owner-last {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       font-weight: 300;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--text-secondary);
       text-align: center;
-      margin-top: -0.1rem;
+      margin-top: 0.05rem;
     }
 
     .timer {
-      font-size: 1.1rem;
-      font-weight: 600;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--timer-color);
     }
 
-    .meta-dot {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
+    .meta-dot { display: none; }
 
     .feature-label {
       display: block;
@@ -630,32 +630,21 @@
       label.textContent = featureLabelText;
       info.appendChild(label);
 
-      const nameRow = document.createElement('div');
-      nameRow.className = 'dog-name-row';
-
-      const name = document.createElement('span');
+      const name = document.createElement('div');
       name.className = 'dog-name';
       name.textContent = dog.name;
+      info.appendChild(name);
 
-      const dot1 = document.createElement('span');
-      dot1.className = 'meta-dot';
-      dot1.textContent = '\u00b7';
+      // Owner last name ALWAYS renders directly under the dog name
+      const owner = document.createElement('div');
+      owner.className = 'owner-last';
+      owner.textContent = dog.ownerLastName || '';
+      info.appendChild(owner);
 
-      const timer = document.createElement('span');
+      const timer = document.createElement('div');
       timer.className = 'timer';
       timer.setAttribute('data-time', dog[timeField]);
-
-      nameRow.appendChild(name);
-      nameRow.appendChild(dot1);
-      nameRow.appendChild(timer);
-      info.appendChild(nameRow);
-
-      if (dog.ownerLastName) {
-        const owner = document.createElement('div');
-        owner.className = 'owner-last';
-        owner.textContent = dog.ownerLastName;
-        info.appendChild(owner);
-      }
+      info.appendChild(timer);
 
       const serviceRow = document.createElement('div');
       serviceRow.className = 'dog-service-row';
