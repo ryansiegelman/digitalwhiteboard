@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0a0908">
-  <title>Down Dog Lodge — Going Home</title>
+  <title>Down Dog Lodge — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,8 @@
       --text-muted: #5e584e;
       --accent: #c8963c;
       --accent-glow: rgba(200, 150, 60, 0.35);
+      --checkin-color: #6aa6e0;
+      --checkin-glow: rgba(106, 166, 224, 0.35);
       --timer-color: #68b47a;
       --radius-sm: 8px;
       --radius-md: 12px;
@@ -47,7 +49,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Subtle ambient warm glow */
     body::after {
       content: '';
       position: fixed;
@@ -96,8 +97,7 @@
     .brand-logo {
       height: 3.2rem;
       width: auto;
-      filter: invert(1);
-      opacity: 0.92;
+      opacity: 1;
     }
 
     .brand-divider {
@@ -115,183 +115,47 @@
       padding-top: 0.1rem;
     }
 
-    /* ─── Controls ─── */
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .location-nav {
-      display: flex;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 3px;
-    }
-
-    .loc-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-family: var(--font-body);
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.55rem 1.25rem;
-      cursor: pointer;
-      border-radius: calc(var(--radius-md) - 2px);
-      transition: color 0.2s, background 0.2s;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-    }
-
-    .loc-btn:hover {
-      color: var(--text);
-      background: var(--surface-raised);
-    }
-
-    .loc-btn.active {
-      background: var(--accent);
-      color: var(--bg);
-    }
-
-    /* ─── Filter ─── */
-    .filter-wrap {
-      position: relative;
-    }
-
-    .filter-toggle {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      font-family: var(--font-body);
-      font-size: 1.1rem;
-      font-weight: 500;
-      padding: 0.55rem 1.1rem;
-      cursor: pointer;
-      border-radius: var(--radius-md);
-      transition: all 0.2s;
-    }
-
-    .filter-toggle:hover {
-      border-color: var(--border-light);
-      color: var(--text);
-    }
-
-    .filter-toggle.active {
-      border-color: var(--accent);
-      color: var(--text);
-    }
-
-    .filter-badge {
-      background: var(--accent);
-      color: var(--bg);
-      font-size: 0.85rem;
-      font-weight: 700;
-      padding: 0.15rem 0.5rem;
-      border-radius: 5px;
-      line-height: 1.3;
-    }
-
-    .filter-chevron {
-      width: 13px;
-      height: 13px;
-      transition: transform 0.2s;
-      opacity: 0.6;
-    }
-
-    .filter-toggle.active .filter-chevron {
-      transform: rotate(180deg);
-    }
-
-    .filter-panel {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      background: var(--surface-raised);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 5px;
-      min-width: 200px;
-      display: none;
-      z-index: 100;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-    }
-
-    .filter-panel.open {
-      display: block;
-    }
-
-    .filter-option {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.55rem 0.65rem;
-      border-radius: calc(var(--radius-md) - 4px);
-      cursor: pointer;
-      transition: background 0.12s;
-    }
-
-    .filter-option:hover {
-      background: var(--surface-hover);
-    }
-
-    .filter-option input[type="checkbox"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border: 1.5px solid var(--border-light);
-      border-radius: 4px;
-      cursor: pointer;
-      flex-shrink: 0;
-      position: relative;
-      transition: all 0.15s;
-      background: transparent;
-    }
-
-    .filter-option input[type="checkbox"]:checked {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .filter-option input[type="checkbox"]:checked::after {
-      content: '';
-      position: absolute;
-      left: 4.5px;
-      top: 1px;
-      width: 5px;
-      height: 9px;
-      border: solid var(--bg);
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-    }
-
-    .filter-option label {
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      flex: 1;
-      transition: color 0.12s;
-    }
-
-    .filter-option:hover label {
-      color: var(--text);
-    }
-
-    /* ─── Main Container ─── */
-    #dog-container {
+    /* ─── Main Container (two panels) ─── */
+    #main-container {
       flex: 1;
       display: flex;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem 2rem;
+      gap: 1rem;
+      padding: 1rem 1.5rem 1.5rem;
       overflow: hidden;
       position: relative;
       z-index: 1;
+      min-height: 0;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      flex-grow: var(--weight, 1);
+      flex-basis: 0;
+      min-width: 0;
+      overflow: hidden;
+      transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .panel-header {
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      padding: 0.4rem 0 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .panel-checkin .panel-header { color: var(--checkin-color); }
+    .panel-checkout .panel-header { color: var(--accent); }
+
+    .panel-content {
+      flex: 1;
+      display: flex;
+      gap: 1rem;
+      overflow: hidden;
+      min-height: 0;
       justify-content: center;
       align-items: stretch;
     }
@@ -329,31 +193,33 @@
     .dog-photo img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center center;
-      aspect-ratio: 1 / 1;
       display: block;
+      background: var(--surface-raised);
     }
 
     .dog-info {
-      padding: 0.6rem 0.5rem 0.3rem;
+      padding: 0.55rem 0.5rem 0.3rem;
       flex-shrink: 0;
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
       justify-content: center;
-      gap: 0.2rem 0.6rem;
+      gap: 0.2rem 0.55rem;
     }
 
-    .going-home-label {
+    .feature-label {
       width: 100%;
       text-align: center;
       font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.2em;
-      color: var(--accent);
     }
+
+    .panel-checkin .feature-label { color: var(--checkin-color); }
+    .panel-checkout .feature-label { color: var(--accent); }
 
     .dog-name {
       font-family: var(--font-display);
@@ -364,7 +230,7 @@
     }
 
     .timer {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 600;
       color: var(--timer-color);
     }
@@ -375,86 +241,90 @@
     }
 
     .service-type {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 500;
-      color: var(--accent);
       text-transform: capitalize;
     }
 
-    /* Featured card */
+    .panel-checkin .service-type { color: var(--checkin-color); }
+    .panel-checkout .service-type { color: var(--accent); }
+
+    /* Featured card (largest, leftmost in each panel) */
     .dog-card.featured {
-      flex: 0 0 40%;
+      flex: 0 0 42%;
     }
 
     .dog-card.featured .dog-name {
-      font-size: 3.25rem;
+      font-size: 2.8rem;
     }
 
     .dog-card.featured .timer {
-      font-size: 2rem;
+      font-size: 1.7rem;
     }
 
     .dog-card.featured .meta-dot {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
     }
 
     .dog-card.featured .service-type {
-      font-size: 1.75rem;
+      font-size: 1.55rem;
     }
 
-    .dog-card.featured .going-home-label {
-      font-size: 1rem;
+    .dog-card.featured .feature-label {
+      font-size: 0.95rem;
     }
 
-    /* Solo card */
+    /* Solo (only one dog in panel) */
     .dog-card.solo {
-      flex: 0 1 550px;
+      flex: 1 1 100%;
       max-height: 100%;
     }
 
-    /* ─── Dogs Grid ─── */
+    /* ─── Dogs Grid (smaller cards beyond the featured) ─── */
     .dogs-grid {
       flex: 1;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1.25rem;
+      gap: 1rem;
       min-width: 0;
       align-content: stretch;
     }
 
-    .dogs-grid .dog-photo img {
-      aspect-ratio: 1 / 1;
-    }
-
     .dogs-grid .dog-name {
-      font-size: 2rem;
+      font-size: 1.7rem;
     }
 
     .dogs-grid .timer {
-      font-size: 1.4rem;
+      font-size: 1.2rem;
     }
 
     .dogs-grid .service-type {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
     }
 
-    .dogs-grid .going-home-label {
+    .dogs-grid .feature-label {
       display: none;
     }
 
-    /* ─── Highlight (recent checkout glow) ─── */
-    .dog-card.highlight {
+    /* ─── Highlight (recent activity glow) ─── */
+    .panel-checkout .dog-card.highlight {
       border-color: var(--accent);
-      animation: glow-pulse 2.5s ease-in-out infinite;
+      animation: glow-pulse-checkout 2.5s ease-in-out infinite;
     }
 
-    @keyframes glow-pulse {
-      0%, 100% {
-        box-shadow: 0 0 0 0 var(--accent-glow);
-      }
-      50% {
-        box-shadow: 0 0 24px 2px rgba(200, 150, 60, 0.12);
-      }
+    .panel-checkin .dog-card.highlight {
+      border-color: var(--checkin-color);
+      animation: glow-pulse-checkin 2.5s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse-checkout {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50% { box-shadow: 0 0 24px 2px rgba(200, 150, 60, 0.12); }
+    }
+
+    @keyframes glow-pulse-checkin {
+      0%, 100% { box-shadow: 0 0 0 0 var(--checkin-glow); }
+      50% { box-shadow: 0 0 24px 2px rgba(106, 166, 224, 0.12); }
     }
 
     /* ─── Card entrance ─── */
@@ -464,14 +334,8 @@
     }
 
     @keyframes card-enter {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* ─── Empty & Loading ─── */
@@ -483,43 +347,39 @@
       justify-content: center;
       width: 100%;
       gap: 0.4rem;
-      padding: 3rem;
+      padding: 1.5rem;
+      text-align: center;
     }
 
     .empty-title {
       font-family: var(--font-display);
-      font-size: 2.25rem;
+      font-size: 1.5rem;
       color: var(--text-secondary);
     }
 
     .empty-sub {
-      font-size: 1.25rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
     }
 
     .loading-state {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       color: var(--text-muted);
       letter-spacing: 0.03em;
     }
 
     /* ─── Responsive ─── */
     @media (max-width: 1200px) {
-      #dog-container {
+      #main-container {
         flex-direction: column;
-        overflow-y: auto;
-        align-items: stretch;
       }
 
-      .dog-card.featured,
-      .dog-card.solo {
-        flex: none;
-        max-width: none;
-        max-height: 50vh;
+      .panel-content {
+        flex-direction: column;
       }
 
-      .dogs-grid {
-        flex: none;
+      .dog-card.featured {
+        flex: 0 0 auto;
       }
     }
 
@@ -535,64 +395,17 @@
         right: 1rem;
       }
 
-      .brand h1 {
-        font-size: 1.5rem;
-      }
-
-      .brand .subtitle {
-        font-size: 0.75rem;
-      }
-
-      .controls {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .loc-btn {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.8rem;
-      }
-
-      .filter-toggle {
-        font-size: 0.8rem;
-      }
-
-      #dog-container {
-        padding: 1rem;
+      #main-container {
+        padding: 0.75rem;
         gap: 0.75rem;
-      }
-
-      .dog-card.featured,
-      .dog-card.solo {
-        max-height: none;
       }
 
       .dog-card.featured .dog-name {
-        font-size: 2rem;
-      }
-
-      .dog-card.featured .timer {
-        font-size: 1.25rem;
-      }
-
-      .dog-card.featured .service-type {
-        font-size: 1.1rem;
-      }
-
-      .dogs-grid {
-        gap: 0.75rem;
+        font-size: 1.8rem;
       }
 
       .dogs-grid .dog-name {
-        font-size: 1.4rem;
-      }
-
-      .dogs-grid .timer {
-        font-size: 1rem;
-      }
-
-      .dogs-grid .service-type {
-        font-size: 0.9rem;
+        font-size: 1.3rem;
       }
 
       .dog-card {
@@ -603,12 +416,6 @@
         border-radius: calc(var(--radius-lg) - 4px);
       }
     }
-
-    @media (max-width: 480px) {
-      .dogs-grid {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
 </head>
 <body>
@@ -616,12 +423,24 @@
     <div class="brand">
       <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
       <span class="brand-divider"></span>
-      <span class="subtitle">Going Home</span>
+      <span class="subtitle">Live Board</span>
     </div>
   </header>
 
-  <main id="dog-container">
-    <div class="loading-state">Loading checkout data...</div>
+  <main id="main-container">
+    <section class="panel panel-checkin" id="panel-checkin">
+      <h2 class="panel-header">Checking In</h2>
+      <div class="panel-content" id="checkin-content">
+        <div class="loading-state">Loading…</div>
+      </div>
+    </section>
+
+    <section class="panel panel-checkout" id="panel-checkout">
+      <h2 class="panel-header">Checking Out</h2>
+      <div class="panel-content" id="checkout-content">
+        <div class="loading-state">Loading…</div>
+      </div>
+    </section>
   </main>
 
   <audio id="ding-sound" preload="auto">
@@ -629,61 +448,85 @@
   </audio>
 
   <script>
-    // Configuration
     const API_BASE_URL = window.location.origin;
+    const VISIBLE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+    const HIGHLIGHT_WINDOW_S = 60;             // 1 min glow
+    const POLL_INTERVAL_MS = 5000;
+    const TIMER_INTERVAL_MS = 5000;
 
     let currentLocation = null;
-    let lastReservationId = null;
-    let allDogs = [];
-    let lastRenderedIds = '';
-
-    // ─── (Filter removed) ───
+    let lastCheckoutId = null;
+    let lastCheckinId = null;
+    let lastRenderedCheckout = '';
+    let lastRenderedCheckin = '';
 
     // ─── Data Loading ───
-    async function loadDogs() {
+    async function fetchList(endpoint) {
       try {
-        const res = await fetch(API_BASE_URL + '/dogs?location=' + currentLocation + '&_=' + Date.now());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        const dogs = await res.json();
-        dogs.forEach(dog => {
-          if (!dog.serviceItemType || dog.serviceItemType === '') {
-            dog.serviceItemType = 'EVALUATION';
-          }
-        });
-
-        allDogs = dogs;
-
-        if (allDogs.length === 0) {
-          document.getElementById('dog-container').innerHTML =
-            '<div class="empty-state"><p class="empty-title">All paws accounted for</p><p class="empty-sub">No recent checkouts at this location</p></div>';
-          lastRenderedIds = '';
-          return;
-        }
-
-        const latestId = allDogs[0].appointmentId;
-        if (latestId !== lastReservationId && lastReservationId !== null) {
-          document.getElementById('ding-sound').play().catch(() => {});
-          lastRenderedIds = '';
-        }
-
-        lastReservationId = latestId;
-        renderDogs();
+        const res = await fetch(`${API_BASE_URL}/${endpoint}?location=${currentLocation}&_=${Date.now()}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
       } catch (err) {
-        console.error('Failed to load dogs:', err);
-        document.getElementById('dog-container').innerHTML =
-          '<div class="empty-state"><p class="empty-title">Unable to connect</p><p class="empty-sub">' + err.message + '</p></div>';
+        console.error(`Failed to load ${endpoint}:`, err);
+        return [];
       }
     }
 
+    function filterRecent(dogs, timeField) {
+      const now = Date.now();
+      return dogs.filter(d => {
+        const ts = d[timeField];
+        if (!ts) return false;
+        return (now - new Date(ts).getTime()) < VISIBLE_WINDOW_MS;
+      });
+    }
+
+    async function loadAll() {
+      const [checkoutsRaw, checkinsRaw] = await Promise.all([
+        fetchList('dogs'),
+        fetchList('checkins')
+      ]);
+
+      checkoutsRaw.forEach(d => { if (!d.serviceItemType) d.serviceItemType = 'EVALUATION'; });
+      checkinsRaw.forEach(d => { if (!d.serviceItemType) d.serviceItemType = 'EVALUATION'; });
+
+      const checkouts = filterRecent(checkoutsRaw, 'checkOutTime');
+      const checkins  = filterRecent(checkinsRaw, 'checkInTime');
+
+      // Ding when a brand-new dog appears in either panel
+      const latestCheckout = checkouts[0]?.appointmentId || null;
+      const latestCheckin  = checkins[0]?.appointmentId || null;
+
+      if (latestCheckout && lastCheckoutId !== null && latestCheckout !== lastCheckoutId) {
+        playDing();
+        lastRenderedCheckout = '';
+      }
+      if (latestCheckin && lastCheckinId !== null && latestCheckin !== lastCheckinId) {
+        playDing();
+        lastRenderedCheckin = '';
+      }
+      lastCheckoutId = latestCheckout;
+      lastCheckinId  = latestCheckin;
+
+      // Resize panels based on relative count (empty side gets a slim sliver)
+      const wCheckin  = checkins.length  > 0 ? checkins.length  : 0.18;
+      const wCheckout = checkouts.length > 0 ? checkouts.length : 0.18;
+      document.getElementById('panel-checkin').style.setProperty('--weight', wCheckin);
+      document.getElementById('panel-checkout').style.setProperty('--weight', wCheckout);
+
+      renderPanel('checkin-content', checkins, 'checkInTime', 'Checking In', 'lastRenderedCheckin');
+      renderPanel('checkout-content', checkouts, 'checkOutTime', 'Checking Out', 'lastRenderedCheckout');
+    }
+
     // ─── Card Creation ───
-    function createDogCard(dog, isFeatured, index) {
+    function createDogCard(dog, isFeatured, timeField, featureLabelText) {
       const card = document.createElement('article');
       card.className = 'dog-card';
       if (isFeatured) card.classList.add('featured');
 
-      const checkoutTime = new Date(dog.checkOutTime);
-      if ((Date.now() - checkoutTime.getTime()) / 1000 <= 60) {
+      const t = new Date(dog[timeField]);
+      if ((Date.now() - t.getTime()) / 1000 <= HIGHLIGHT_WINDOW_S) {
         card.classList.add('highlight');
       }
 
@@ -702,8 +545,8 @@
 
       if (isFeatured) {
         const label = document.createElement('span');
-        label.className = 'going-home-label';
-        label.textContent = 'Going Home';
+        label.className = 'feature-label';
+        label.textContent = featureLabelText;
         info.appendChild(label);
       }
 
@@ -717,7 +560,7 @@
 
       const timer = document.createElement('span');
       timer.className = 'timer';
-      timer.setAttribute('data-checkout', dog.checkOutTime);
+      timer.setAttribute('data-time', dog[timeField]);
 
       const dot2 = document.createElement('span');
       dot2.className = 'meta-dot';
@@ -725,7 +568,7 @@
 
       const type = document.createElement('span');
       type.className = 'service-type';
-      type.textContent = dog.serviceItemType.toLowerCase().replace(/_/g, ' ');
+      type.textContent = (dog.serviceItemType || '').toLowerCase().replace(/_/g, ' ');
 
       info.appendChild(name);
       info.appendChild(dot1);
@@ -735,55 +578,48 @@
 
       card.appendChild(photoWrap);
       card.appendChild(info);
-
       return card;
     }
 
     // ─── Rendering ───
-    function renderDogs() {
-      const container = document.getElementById('dog-container');
-      const filteredDogs = allDogs;
+    const renderState = { lastRenderedCheckin: '', lastRenderedCheckout: '' };
 
-      const currentIds = filteredDogs.map(d => d.appointmentId).join(',');
-      const shouldAnimate = currentIds !== lastRenderedIds;
+    function renderPanel(containerId, dogs, timeField, featureLabelText, stateKey) {
+      const container = document.getElementById(containerId);
+      const ids = dogs.map(d => d.appointmentId).join(',');
 
-      if (!shouldAnimate) {
+      if (ids === renderState[stateKey]) {
         updateTimers();
         return;
       }
-
-      lastRenderedIds = currentIds;
+      renderState[stateKey] = ids;
       container.innerHTML = '';
 
-      if (filteredDogs.length === 0) {
+      if (dogs.length === 0) {
+        const empty = featureLabelText === 'Checking In'
+          ? { title: 'Quiet morning', sub: 'No recent check-ins' }
+          : { title: 'All paws accounted for', sub: 'No recent check-outs' };
         container.innerHTML =
-          '<div class="empty-state"><p class="empty-title">No dogs going home yet</p><p class="empty-sub">Check back soon</p></div>';
+          `<div class="empty-state"><p class="empty-title">${empty.title}</p><p class="empty-sub">${empty.sub}</p></div>`;
         return;
       }
 
-      // Featured card (most recent dog)
-      const featured = createDogCard(filteredDogs[0], true, 0);
+      const featured = createDogCard(dogs[0], true, timeField, featureLabelText);
       featured.style.setProperty('--i', 0);
       featured.classList.add('animate-in');
 
-      if (filteredDogs.length === 1) {
-        featured.classList.add('solo');
-      }
-
+      if (dogs.length === 1) featured.classList.add('solo');
       container.appendChild(featured);
 
-      // Grid for remaining dogs
-      if (filteredDogs.length > 1) {
+      if (dogs.length > 1) {
         const grid = document.createElement('div');
         grid.className = 'dogs-grid';
-
-        filteredDogs.slice(1).forEach((dog, i) => {
-          const card = createDogCard(dog, false, i + 1);
+        dogs.slice(1).forEach((dog, i) => {
+          const card = createDogCard(dog, false, timeField, featureLabelText);
           card.style.setProperty('--i', i + 1);
           card.classList.add('animate-in');
           grid.appendChild(card);
         });
-
         container.appendChild(grid);
       }
 
@@ -794,28 +630,36 @@
     function updateTimers() {
       const now = Date.now();
       document.querySelectorAll('.timer').forEach(timer => {
-        const checkout = new Date(timer.getAttribute('data-checkout')).getTime();
-        const diffMs = now - checkout;
+        const t = new Date(timer.getAttribute('data-time')).getTime();
+        const diffMs = now - t;
         const diffMin = Math.floor(diffMs / 60000);
 
-        if (diffMin <= 0) {
-          timer.textContent = 'Just now';
-        } else if (diffMin === 1) {
-          timer.textContent = '1 min ago';
-        } else {
-          timer.textContent = diffMin + ' min ago';
-        }
+        if (diffMin <= 0) timer.textContent = 'Just now';
+        else if (diffMin === 1) timer.textContent = '1 min ago';
+        else timer.textContent = diffMin + ' min ago';
 
-        // Update highlight state dynamically
         const card = timer.closest('.dog-card');
         if (card) {
-          if (diffMs / 1000 <= 60) {
-            card.classList.add('highlight');
-          } else {
-            card.classList.remove('highlight');
-          }
+          if (diffMs / 1000 <= HIGHLIGHT_WINDOW_S) card.classList.add('highlight');
+          else card.classList.remove('highlight');
         }
       });
+    }
+
+    function playDing() {
+      try { document.getElementById('ding-sound').play().catch(() => {}); } catch {}
+    }
+
+    // ─── Periodic prune (drops anything that crossed the 10-min line without a server poke) ───
+    function periodicPrune() {
+      // The render keys are reset so the next loadAll will rebuild based on
+      // the freshly-filtered list. We also force a re-render now so cards
+      // disappear immediately at the 10-minute mark.
+      lastRenderedCheckin = '';
+      lastRenderedCheckout = '';
+      renderState.lastRenderedCheckin = '';
+      renderState.lastRenderedCheckout = '';
+      loadAll();
     }
 
     // ─── Init ───
@@ -824,28 +668,29 @@
         const res = await fetch(API_BASE_URL + '/locations');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-
         const businessName = data.businessName || 'Pet Facility';
         const locations = data.locations || {};
         const slugs = Object.keys(locations);
         if (slugs.length === 0) throw new Error('No locations configured');
 
         currentLocation = slugs[0];
-        document.title = businessName + ' \u2014 Going Home';
+        document.title = businessName + ' \u2014 Live Board';
 
-        loadDogs();
-        setInterval(updateTimers, 5000);
-        setInterval(loadDogs, 5000);
+        loadAll();
+        setInterval(updateTimers, TIMER_INTERVAL_MS);
+        setInterval(loadAll, POLL_INTERVAL_MS);
+        // Re-evaluate the 10-minute window every 30s so stale cards leave on time
+        setInterval(periodicPrune, 30 * 1000);
       } catch (err) {
-        document.getElementById('dog-container').innerHTML =
+        document.getElementById('checkin-content').innerHTML =
           '<div class="empty-state"><p class="empty-title">Configuration error</p>' +
           '<p class="empty-sub">' + err.message + '</p></div>';
+        document.getElementById('checkout-content').innerHTML = '';
       }
     }
 
     initDashboard();
 
-    // Enable audio on first interaction
     document.addEventListener('click', () => {
       document.getElementById('ding-sound').load();
     }, { once: true });
