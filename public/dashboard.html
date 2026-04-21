@@ -19,11 +19,12 @@
       --text: #ede8df;
       --text-secondary: #9e968a;
       --text-muted: #5e584e;
-      --accent: #c8963c;
-      --accent-glow: rgba(200, 150, 60, 0.35);
+      --accent: #ede8df;
+      --accent-glow: rgba(237, 232, 223, 0.35);
       --checkin-color: #ede8df;
       --checkin-glow: rgba(237, 232, 223, 0.35);
-      --timer-color: #68b47a;
+      --ddl-blue: #6aa6e0;
+      --timer-color: #6aa6e0;
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 20px;
@@ -53,7 +54,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at 25% 55%, rgba(200, 150, 60, 0.025) 0%, transparent 55%);
+      background: radial-gradient(ellipse at 25% 55%, rgba(237, 232, 223, 0.02) 0%, transparent 55%);
       pointer-events: none;
       z-index: 0;
     }
@@ -81,7 +82,7 @@
         transparent,
         var(--border) 15%,
         var(--border-light) 40%,
-        rgba(200, 150, 60, 0.25) 50%,
+        rgba(237, 232, 223, 0.25) 50%,
         var(--border-light) 60%,
         var(--border) 85%,
         transparent
@@ -115,6 +116,30 @@
       padding-top: 0.1rem;
     }
 
+    /* ─── Header clock ─── */
+    .datetime {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.15rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .datetime .dt-time {
+      font-family: var(--font-display);
+      font-size: 1.9rem;
+      color: var(--text);
+    }
+
+    .datetime .dt-date {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-secondary);
+    }
+
     /* ─── Main Container (two panels) ─── */
     #main-container {
       flex: 1;
@@ -132,7 +157,7 @@
       flex-direction: column;
       flex-grow: var(--weight, 1);
       flex-basis: 0;
-      min-width: 0;
+      min-width: 220px;
       overflow: hidden;
       transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -145,6 +170,7 @@
       letter-spacing: 0.22em;
       padding: 0.4rem 0 0.9rem;
       flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .panel-checkin .panel-header { color: var(--checkin-color); }
@@ -203,10 +229,41 @@
       padding: 0.55rem 0.5rem 0.3rem;
       flex-shrink: 0;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .dog-name-row {
+      display: flex;
       flex-wrap: wrap;
       align-items: baseline;
       justify-content: center;
       gap: 0.2rem 0.55rem;
+    }
+
+    .dog-service-row {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .service-type {
+      display: inline-block;
+      padding: 0.2rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      background: var(--surface-raised);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ddl-blue);
+    }
+
+    .panel-checkin .service-type,
+    .panel-checkout .service-type {
+      color: var(--ddl-blue);
     }
 
     .feature-label {
@@ -240,15 +297,6 @@
       font-size: 1rem;
     }
 
-    .service-type {
-      font-size: 1.2rem;
-      font-weight: 500;
-      text-transform: capitalize;
-    }
-
-    .panel-checkin .service-type { color: var(--checkin-color); }
-    .panel-checkout .service-type { color: var(--accent); }
-
     /* Featured card (largest, leftmost in each panel) */
     .dog-card.featured {
       flex: 0 0 42%;
@@ -267,7 +315,8 @@
     }
 
     .dog-card.featured .service-type {
-      font-size: 1.55rem;
+      font-size: 1.15rem;
+      padding: 0.3rem 1rem;
     }
 
     .dog-card.featured .feature-label {
@@ -284,7 +333,8 @@
     .dogs-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(var(--cols, 2), 1fr);
+      grid-auto-rows: 1fr;
       gap: 1rem;
       min-width: 0;
       align-content: stretch;
@@ -299,7 +349,8 @@
     }
 
     .dogs-grid .service-type {
-      font-size: 1.1rem;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.55rem;
     }
 
     .dogs-grid .feature-label {
@@ -319,7 +370,7 @@
 
     @keyframes glow-pulse-checkout {
       0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
-      50% { box-shadow: 0 0 24px 2px rgba(200, 150, 60, 0.12); }
+      50% { box-shadow: 0 0 24px 2px rgba(237, 232, 223, 0.14); }
     }
 
     @keyframes glow-pulse-checkin {
@@ -424,6 +475,10 @@
       <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
       <span class="brand-divider"></span>
       <span class="subtitle">Live</span>
+    </div>
+    <div class="datetime" id="datetime">
+      <span class="dt-time" id="dt-time">--:--</span>
+      <span class="dt-date" id="dt-date">—</span>
     </div>
   </header>
 
@@ -559,6 +614,9 @@
         info.appendChild(label);
       }
 
+      const nameRow = document.createElement('div');
+      nameRow.className = 'dog-name-row';
+
       const name = document.createElement('span');
       name.className = 'dog-name';
       name.textContent = dog.name;
@@ -571,23 +629,41 @@
       timer.className = 'timer';
       timer.setAttribute('data-time', dog[timeField]);
 
-      const dot2 = document.createElement('span');
-      dot2.className = 'meta-dot';
-      dot2.textContent = '\u00b7';
+      nameRow.appendChild(name);
+      nameRow.appendChild(dot1);
+      nameRow.appendChild(timer);
+      info.appendChild(nameRow);
 
+      const serviceRow = document.createElement('div');
+      serviceRow.className = 'dog-service-row';
       const type = document.createElement('span');
       type.className = 'service-type';
-      type.textContent = (dog.serviceItemType || '').toLowerCase().replace(/_/g, ' ');
-
-      info.appendChild(name);
-      info.appendChild(dot1);
-      info.appendChild(timer);
-      info.appendChild(dot2);
-      info.appendChild(type);
+      type.textContent = formatServiceType(dog.serviceItemType);
+      serviceRow.appendChild(type);
+      info.appendChild(serviceRow);
 
       card.appendChild(photoWrap);
       card.appendChild(info);
       return card;
+    }
+
+    function formatServiceType(raw) {
+      if (!raw) return 'Reservation';
+      const s = String(raw).toLowerCase().replace(/_/g, ' ').trim();
+      if (!s) return 'Reservation';
+      // Map a few known MoeGo enums to friendlier labels
+      const map = {
+        'evaluation': 'Evaluation',
+        'daycare': 'Daycare',
+        'day care': 'Daycare',
+        'boarding': 'Boarding',
+        'overnight': 'Boarding',
+        'grooming': 'Grooming',
+        'bath': 'Bath',
+        'training': 'Training'
+      };
+      if (map[s]) return map[s];
+      return s.replace(/\b\w/g, c => c.toUpperCase());
     }
 
     // ─── Rendering ───
@@ -621,7 +697,11 @@
       if (dogs.length > 1) {
         const grid = document.createElement('div');
         grid.className = 'dogs-grid';
-        dogs.slice(1).forEach((dog, i) => {
+        const extras = dogs.slice(1);
+        // Dog images shrink as more dogs appear: cols = ceil(sqrt(N)), capped at 4
+        const cols = Math.min(4, Math.max(1, Math.ceil(Math.sqrt(extras.length))));
+        grid.style.setProperty('--cols', cols);
+        extras.forEach((dog, i) => {
           const card = createDogCard(dog, false, timeField, featureLabelText);
           card.style.setProperty('--i', i + 1);
           card.classList.add('animate-in');
@@ -657,6 +737,25 @@
       try { document.getElementById('ding-sound').play().catch(() => {}); } catch {}
     }
 
+    // ─── Header clock ───
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const dateStr = now.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const tEl = document.getElementById('dt-time');
+      const dEl = document.getElementById('dt-date');
+      if (tEl) tEl.textContent = timeStr;
+      if (dEl) dEl.textContent = dateStr;
+    }
+
     // ─── Periodic prune (drops anything that crossed the 10-min line without a server poke) ───
     function periodicPrune() {
       // The render keys are reset so the next loadAll will rebuild based on
@@ -682,6 +781,9 @@
 
         currentLocation = slugs[0];
         document.title = businessName + ' \u2014 Live Board';
+
+        updateClock();
+        setInterval(updateClock, 1000);
 
         loadAll();
         setInterval(updateTimers, TIMER_INTERVAL_MS);
