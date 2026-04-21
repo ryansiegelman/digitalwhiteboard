@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0a0908">
-  <title>Down Dog Lodge â Dashboard</title>
+  <title>Down Dog Lodge Ã¢ÂÂ Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -59,7 +59,7 @@
       z-index: 0;
     }
 
-    /* âââ Header âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Header Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .header {
       position: relative;
       padding: 1.1rem 2rem;
@@ -116,7 +116,7 @@
       padding-top: 0.1rem;
     }
 
-    /* âââ Header clock âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Header clock Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .datetime {
       display: flex;
       flex-direction: column;
@@ -140,7 +140,7 @@
       color: var(--text-secondary);
     }
 
-    /* âââ Main Container (two panels) âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Main Container (two panels) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     #main-container {
       flex: 1;
       display: flex;
@@ -189,7 +189,7 @@
       align-items: stretch;
     }
 
-    /* âââ Dog Cards âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Dog Cards Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .dog-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -294,14 +294,14 @@
     }
 
     .owner-last {
-      font-size: 0.75rem;
-      font-weight: 300;
-      letter-spacing: 0.18em;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-secondary);
       text-align: center;
-      margin-top: 0.05rem;
-      margin-bottom: 0.6rem;
+      margin-top: 0.15rem;
+      margin-bottom: 0.5rem;
     }
 
     .timer {
@@ -337,7 +337,7 @@
       max-height: 100%;
     }
 
-    /* âââ Dogs Grid (smaller cards beyond the featured) âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Dogs Grid (smaller cards beyond the featured) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .dogs-grid {
       flex: 1;
       display: grid;
@@ -348,7 +348,7 @@
       align-content: stretch;
     }
 
-    /* âââ Highlight (recent activity glow) âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Highlight (recent activity glow) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .panel-checkout .dog-card.highlight {
       border-color: var(--accent);
       animation: glow-pulse-checkout 2.5s ease-in-out infinite;
@@ -369,7 +369,7 @@
       50% { box-shadow: 0 0 24px 2px rgba(237, 232, 223, 0.14); }
     }
 
-    /* âââ Card entrance âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Card entrance Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .animate-in {
       animation: card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
       animation-delay: calc(var(--i, 0) * 0.07s);
@@ -380,7 +380,7 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* âââ Empty & Loading âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Empty & Loading Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     .empty-state,
     .loading-state {
       display: flex;
@@ -395,9 +395,9 @@
 
     .empty-check {
       display: inline-block;
-      font-size: 2rem;
+      font-size: 6rem;
       line-height: 1;
-      color: var(--text-muted);
+      color: #ffffff;
       font-weight: 400;
     }
 
@@ -407,7 +407,7 @@
       letter-spacing: 0.03em;
     }
 
-    /* âââ Responsive âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Responsive Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     @media (max-width: 1200px) {
       #main-container {
         flex-direction: column;
@@ -462,7 +462,7 @@
     </div>
     <div class="datetime" id="datetime">
       <span class="dt-time" id="dt-time">--:--</span>
-      <span class="dt-date" id="dt-date">â</span>
+      <span class="dt-date" id="dt-date">Ã¢ÂÂ</span>
     </div>
   </header>
 
@@ -470,14 +470,14 @@
     <section class="panel panel-checkin" id="panel-checkin">
       <h2 class="panel-header">Checking In</h2>
       <div class="panel-content" id="checkin-content">
-        <div class="loading-state"><span class="empty-check">â</span></div>
+        <div class="loading-state"><span class="empty-check">✓</span></div>
       </div>
     </section>
 
     <section class="panel panel-checkout" id="panel-checkout">
       <h2 class="panel-header">Checking Out</h2>
       <div class="panel-content" id="checkout-content">
-        <div class="loading-state"><span class="empty-check">â</span></div>
+        <div class="loading-state"><span class="empty-check">✓</span></div>
       </div>
     </section>
   </main>
@@ -502,7 +502,7 @@
     let lastRenderedCheckout = '';
     let lastRenderedCheckin = '';
 
-    // âââ Data Loading âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Data Loading Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     async function fetchList(endpoint) {
       if (DEMO_MODE) return demoList(endpoint);
       try {
@@ -544,7 +544,7 @@
       }
     }
 
-    // âââ Demo data âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Demo data Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     function demoList(endpoint) {
       const now = Date.now();
       const min = (n) => new Date(now - n * 60000).toISOString();
@@ -639,7 +639,7 @@
       renderPanel('checkout-content', checkouts, 'checkOutTime', 'Checking Out', 'lastRenderedCheckout');
     }
 
-    // âââ Card Creation âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Card Creation Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     function createDogCard(dog, isFeatured, timeField, featureLabelText) {
       const card = document.createElement('article');
       card.className = 'dog-card';
@@ -673,10 +673,12 @@
       name.textContent = dog.name;
       info.appendChild(name);
 
-      // Owner last name ALWAYS renders directly under the dog name
+      // Owner last name renders directly under the dog name
       const owner = document.createElement('div');
       owner.className = 'owner-last';
-      owner.textContent = dog.ownerLastName || '';
+      const ownerName = dog.ownerLastName || dog.owner_last_name || '';
+      owner.textContent = ownerName;
+      if (!ownerName) owner.style.display = 'none';
       info.appendChild(owner);
 
       const timer = document.createElement('div');
@@ -717,7 +719,7 @@
       return s.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    // âââ Rendering âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Rendering Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     const renderState = { lastRenderedCheckin: '', lastRenderedCheckout: '' };
 
     function renderPanel(containerId, dogs, timeField, featureLabelText, stateKey) {
@@ -733,7 +735,7 @@
 
       if (dogs.length === 0) {
         container.innerHTML =
-          `<div class="empty-state"><span class="empty-check">â</span></div>`;
+          `<div class="empty-state"><span class="empty-check">✓</span></div>`;
         return;
       }
 
@@ -763,7 +765,7 @@
       updateTimers();
     }
 
-    // âââ Timer Updates âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Timer Updates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     function updateTimers() {
       const now = Date.now();
       let staleFound = false;
@@ -802,7 +804,7 @@
       try { document.getElementById('ding-sound').play().catch(() => {}); } catch {}
     }
 
-    // âââ Header clock âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Header clock Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     function updateClock() {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-US', {
@@ -821,7 +823,7 @@
       if (dEl) dEl.textContent = dateStr;
     }
 
-    // âââ Periodic prune (drops anything that crossed the 10-min line without a server poke) âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Periodic prune (drops anything that crossed the 10-min line without a server poke) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     function periodicPrune() {
       // The render keys are reset so the next loadAll will rebuild based on
       // the freshly-filtered list. We also force a re-render now so cards
@@ -833,7 +835,7 @@
       loadAll();
     }
 
-    // âââ Init âââ
+    // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Init Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     async function initDashboard() {
       try {
         if (DEMO_MODE) {
@@ -863,9 +865,9 @@
       } catch (err) {
         console.error('init error:', err);
         document.getElementById('checkin-content').innerHTML =
-          '<div class="empty-state"><span class="empty-check">â</span></div>';
+          '<div class="empty-state"><span class="empty-check">✓</span></div>';
         document.getElementById('checkout-content').innerHTML =
-          '<div class="empty-state"><span class="empty-check">â</span></div>';
+          '<div class="empty-state"><span class="empty-check">✓</span></div>';
       }
     }
 
@@ -875,7 +877,7 @@
       document.getElementById('ding-sound').load();
     }, { once: true });
 
-    // ——— Debug overlay (Ctrl+Shift+D) ———
+    // âââ Debug overlay (Ctrl+Shift+D) âââ
     (function() {
       let debugVisible = false;
       let debugEl = null;
