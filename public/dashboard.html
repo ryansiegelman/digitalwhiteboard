@@ -21,8 +21,8 @@
       --text-muted: #5e584e;
       --accent: #c8963c;
       --accent-glow: rgba(200, 150, 60, 0.35);
-      --checkin-color: #6aa6e0;
-      --checkin-glow: rgba(106, 166, 224, 0.35);
+      --checkin-color: #ede8df;
+      --checkin-glow: rgba(237, 232, 223, 0.35);
       --timer-color: #68b47a;
       --radius-sm: 8px;
       --radius-md: 12px;
@@ -324,7 +324,7 @@
 
     @keyframes glow-pulse-checkin {
       0%, 100% { box-shadow: 0 0 0 0 var(--checkin-glow); }
-      50% { box-shadow: 0 0 24px 2px rgba(106, 166, 224, 0.12); }
+      50% { box-shadow: 0 0 24px 2px rgba(237, 232, 223, 0.14); }
     }
 
     /* ─── Card entrance ─── */
@@ -423,7 +423,7 @@
     <div class="brand">
       <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
       <span class="brand-divider"></span>
-      <span class="subtitle">Live Board</span>
+      <span class="subtitle">Live</span>
     </div>
   </header>
 
@@ -509,9 +509,18 @@
       lastCheckoutId = latestCheckout;
       lastCheckinId  = latestCheckin;
 
-      // Resize panels based on relative count (empty side gets a slim sliver)
-      const wCheckin  = checkins.length  > 0 ? checkins.length  : 0.18;
-      const wCheckout = checkouts.length > 0 ? checkouts.length : 0.18;
+      // Resize panels based on count + time-of-day bias.
+      //   6am - 2pm → Checking In is the prominent side
+      //   3pm - 10pm → Checking Out is the prominent side
+      const hour = new Date().getHours();
+      const checkinPrime  = hour >= 6  && hour < 14;
+      const checkoutPrime = hour >= 15 && hour < 22;
+
+      let wCheckin  = checkins.length  > 0 ? checkins.length  : 0.18;
+      let wCheckout = checkouts.length > 0 ? checkouts.length : 0.18;
+      if (checkinPrime)  wCheckin  += 3;
+      if (checkoutPrime) wCheckout += 3;
+
       document.getElementById('panel-checkin').style.setProperty('--weight', wCheckin);
       document.getElementById('panel-checkout').style.setProperty('--weight', wCheckout);
 
@@ -596,11 +605,9 @@
       container.innerHTML = '';
 
       if (dogs.length === 0) {
-        const empty = featureLabelText === 'Checking In'
-          ? { title: 'Quiet morning', sub: 'No recent check-ins' }
-          : { title: 'All paws accounted for', sub: 'No recent check-outs' };
+        const sub = featureLabelText === 'Checking In' ? 'No recent check-ins' : 'No recent check-outs';
         container.innerHTML =
-          `<div class="empty-state"><p class="empty-title">${empty.title}</p><p class="empty-sub">${empty.sub}</p></div>`;
+          `<div class="empty-state"><p class="empty-title">Up To Date</p><p class="empty-sub">${sub}</p></div>`;
         return;
       }
 
