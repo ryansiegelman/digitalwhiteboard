@@ -300,6 +300,7 @@
       color: var(--text-secondary);
       text-align: center;
       margin-top: 0.05rem;
+      margin-bottom: 0.6rem;
     }
 
     .timer {
@@ -308,6 +309,7 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--timer-color);
+      margin-top: 0.1rem;
     }
 
     .meta-dot { display: none; }
@@ -616,10 +618,10 @@
       photoWrap.className = 'dog-photo';
 
       const img = document.createElement('img');
-      img.src = dog.imageUrl || 'placeholder.jpg';
+      img.src = dog.imageUrl || 'placeholder.svg';
       img.alt = dog.name;
       img.decoding = 'async';
-      img.onerror = () => { img.src = 'placeholder.jpg'; };
+      img.onerror = () => { img.onerror = null; img.src = 'placeholder.svg'; };
       photoWrap.appendChild(img);
 
       const info = document.createElement('div');
