@@ -490,7 +490,7 @@
 
   <script>
     const API_BASE_URL = window.location.origin;
-    const VISIBLE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+    const VISIBLE_WINDOW_MS = 4 * 60 * 60 * 1000; // 4 hours
     const HIGHLIGHT_WINDOW_S = 60;             // 1 min glow
     const POLL_INTERVAL_MS = 5000;
     const TIMER_INTERVAL_MS = 5000;
@@ -600,10 +600,12 @@
       if (latestCheckout && lastCheckoutId !== null && latestCheckout !== lastCheckoutId) {
         playDing();
         lastRenderedCheckout = '';
+        renderState.lastRenderedCheckout = '';
       }
       if (latestCheckin && lastCheckinId !== null && latestCheckin !== lastCheckinId) {
         playDing();
         lastRenderedCheckin = '';
+        renderState.lastRenderedCheckin = '';
       }
       lastCheckoutId = latestCheckout;
       lastCheckinId  = latestCheckin;
