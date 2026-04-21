@@ -31,6 +31,29 @@ for (const loc of config.LOCATIONS) { LOCATIONS[loc.slug] = { id: loc.id, name: 
 const BUSINESS_ID_TO_LOCATION = {};
 for (const [key, loc] of Object.entries(LOCATIONS)) { BUSINESS_ID_TO_LOCATION[loc.id] = key; }
 
+// ─── Service/reservation name extractor ───
+// Prefer the human-readable service name ("TT: Phase 1") over the raw enum (EVALUATION).
+function extractServiceName(detail) {
+  const sd = (detail?.serviceDetails && detail.serviceDetails[0]) || {};
+  const candidates = [
+    sd.serviceName,
+    sd.name,
+    sd.service?.name,
+    sd.service?.serviceName,
+    sd.displayName,
+    detail?.service?.name,
+    detail?.service?.serviceName,
+    detail?.serviceName,
+    detail?.name,
+  ];
+  for (const c of candidates) {
+    if (!c) continue;
+    const s = String(c).trim();
+    if (s) return s;
+  }
+  return '';
+}
+
 // ─── Pet photo extractor ───
 // MoeGo has shifted field names over time; try every reasonable candidate.
 function extractPetPhoto(detail) {
@@ -196,7 +219,8 @@ function updateDogsFromWebhook(appointment) {
     name: detail.pet?.name || 'Unknown', imageUrl: extractPetPhoto(detail),
     ownerLastName: extractOwnerLastName(appointment, detail),
     checkOutTime, appointmentId: appointment.id,
-    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || ''
+    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || '',
+    serviceName: extractServiceName(detail)
   }));
   if (newDogs.length === 0) return;
   mergeDogsIntoFile(`dogs-${locationKey}.json`, newDogs, 'checkOutTime');
@@ -214,7 +238,8 @@ function updateCheckinsFromWebhook(appointment) {
     name: detail.pet?.name || 'Unknown', imageUrl: extractPetPhoto(detail),
     ownerLastName: extractOwnerLastName(appointment, detail),
     checkInTime, appointmentId: appointment.id,
-    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || ''
+    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || '',
+    serviceName: extractServiceName(detail)
   }));
   if (newDogs.length === 0) return;
   mergeDogsIntoFile(`checkins-${locationKey}.json`, newDogs, 'checkInTime');
@@ -268,7 +293,7 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
       const checkOutTime = appointment.checkOutTime;
       (appointment.petServiceDetails || []).forEach(detail => {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
+        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '', serviceName: extractServiceName(detail) });
       });
     });
     dogs.sort((a, b) => new Date(b.checkOutTime) - new Date(a.checkOutTime));
@@ -303,7 +328,7 @@ async function fetchCheckinsForLocation(businessId, fileName) {
       if (!checkInTime) return;
       (appointment.petServiceDetails || []).forEach(detail => {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '' });
+        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '', serviceName: extractServiceName(detail) });
       });
     });
     dogs.sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime));

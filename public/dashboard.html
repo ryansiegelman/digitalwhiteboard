@@ -524,19 +524,19 @@
 
       if (endpoint === 'checkins') {
         return [
-          { appointmentId: 'demo-in-1', name: 'Cheddar',  ownerLastName: 'Siegelman', imageUrl: photo(1),  serviceItemType: 'BOARDING',  checkInTime: min(1) },
-          { appointmentId: 'demo-in-2', name: 'Biscuit',  ownerLastName: 'Harper',    imageUrl: photo(2),  serviceItemType: 'DAYCARE',   checkInTime: min(3) },
-          { appointmentId: 'demo-in-3', name: 'Mango',    ownerLastName: 'Nguyen',    imageUrl: photo(3),  serviceItemType: 'EVALUATION',checkInTime: min(5) },
-          { appointmentId: 'demo-in-4', name: 'Pepper',   ownerLastName: 'Kim',       imageUrl: photo(4),  serviceItemType: 'DAYCARE',   checkInTime: min(7) },
-          { appointmentId: 'demo-in-5', name: 'Juno',     ownerLastName: 'Alvarez',   imageUrl: photo(5),  serviceItemType: 'BOARDING',  checkInTime: min(9) }
+          { appointmentId: 'demo-in-1', name: 'Cheddar',  ownerLastName: 'Siegelman', imageUrl: photo(1),  serviceName: 'Boarding',      serviceItemType: 'BOARDING',  checkInTime: min(1) },
+          { appointmentId: 'demo-in-2', name: 'Biscuit',  ownerLastName: 'Harper',    imageUrl: photo(2),  serviceName: 'Daycare',       serviceItemType: 'DAYCARE',   checkInTime: min(3) },
+          { appointmentId: 'demo-in-3', name: 'Mango',    ownerLastName: 'Nguyen',    imageUrl: photo(3),  serviceName: 'TT: Phase 1',   serviceItemType: 'EVALUATION',checkInTime: min(5) },
+          { appointmentId: 'demo-in-4', name: 'Pepper',   ownerLastName: 'Kim',       imageUrl: photo(4),  serviceName: 'Daycare',       serviceItemType: 'DAYCARE',   checkInTime: min(7) },
+          { appointmentId: 'demo-in-5', name: 'Juno',     ownerLastName: 'Alvarez',   imageUrl: photo(5),  serviceName: 'TT: Phase 2',   serviceItemType: 'EVALUATION',checkInTime: min(9) }
         ];
       }
       if (endpoint === 'dogs') {
         return [
-          { appointmentId: 'demo-out-1', name: 'Maverick', ownerLastName: 'Patel',   imageUrl: photo(6),  serviceItemType: 'DAYCARE',  checkOutTime: min(1) },
-          { appointmentId: 'demo-out-2', name: 'Luna',     ownerLastName: 'Johnson', imageUrl: photo(7),  serviceItemType: 'BOARDING', checkOutTime: min(4) },
-          { appointmentId: 'demo-out-3', name: 'Scout',    ownerLastName: 'Brooks',  imageUrl: photo(8),  serviceItemType: 'DAYCARE',  checkOutTime: min(6) },
-          { appointmentId: 'demo-out-4', name: 'Olive',    ownerLastName: 'Chen',    imageUrl: photo(9),  serviceItemType: 'GROOMING', checkOutTime: min(8) }
+          { appointmentId: 'demo-out-1', name: 'Maverick', ownerLastName: 'Patel',   imageUrl: photo(6),  serviceName: 'Daycare',     serviceItemType: 'DAYCARE',  checkOutTime: min(1) },
+          { appointmentId: 'demo-out-2', name: 'Luna',     ownerLastName: 'Johnson', imageUrl: photo(7),  serviceName: 'Boarding',    serviceItemType: 'BOARDING', checkOutTime: min(4) },
+          { appointmentId: 'demo-out-3', name: 'Scout',    ownerLastName: 'Brooks',  imageUrl: photo(8),  serviceName: 'TT: Phase 1', serviceItemType: 'EVALUATION', checkOutTime: min(6) },
+          { appointmentId: 'demo-out-4', name: 'Olive',    ownerLastName: 'Chen',    imageUrl: photo(9),  serviceName: 'TT: Phase 2', serviceItemType: 'EVALUATION', checkOutTime: min(8) }
         ];
       }
       return [];
@@ -653,7 +653,8 @@
       serviceRow.className = 'dog-service-row';
       const type = document.createElement('span');
       type.className = 'service-type';
-      type.textContent = formatServiceType(dog.serviceItemType);
+      // Prefer the actual reservation name (e.g. "TT: Phase 1") over the generic enum.
+      type.textContent = dog.serviceName ? dog.serviceName : formatServiceType(dog.serviceItemType);
       serviceRow.appendChild(type);
       info.appendChild(serviceRow);
 
