@@ -7,6 +7,9 @@ const crypto = require('crypto');
 const app = express();
 const config = require('./config');
 
+// Cache to avoid repeated client lookups
+const clientCache = new Map();
+
 // Enable CORS
 function buildCorsOrigins(raw) {
   const trimmed = (raw || '').trim();
@@ -31,7 +34,7 @@ for (const loc of config.LOCATIONS) { LOCATIONS[loc.slug] = { id: loc.id, name: 
 const BUSINESS_ID_TO_LOCATION = {};
 for (const [key, loc] of Object.entries(LOCATIONS)) { BUSINESS_ID_TO_LOCATION[loc.id] = key; }
 
-// ─── Service/reservation name extractor ───
+//  Service/reservation name extractor 
 // Prefer the human-readable service name ("TT: Phase 1") over the raw enum (EVALUATION).
 function extractServiceName(detail) {
   const sd = (detail?.serviceDetails && detail.serviceDetails[0]) || {};
@@ -54,7 +57,30 @@ function extractServiceName(detail) {
   return '';
 }
 
-// ─── Pet photo extractor ───
+//  Pet photo extractor 
+// Async client name lookup with in-memory cache
+async function fetchClientLastName(customerId) {
+  if (!customerId) return '';
+  if (clientCache.has(customerId)) return clientCache.get(customerId);
+  try {
+    const r = await axios.request({
+      method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
+    });
+    const client = r.data && r.data.client ? r.data.client : (r.data || {});
+    const ln = client.lastName || client.familyName || client.last_name || '';
+    const fn = client.fullName || client.name || '';
+    const result = ln || (fn ? fn.trim().split(/\s+/).pop() : '');
+    clientCache.set(customerId, result);
+    return result;
+  } catch (err) {
+    console.error('Client lookup failed for', customerId, ':', err.message);
+    clientCache.set(customerId, '');
+    return '';
+  }
+}
+
 // MoeGo has shifted field names over time; try every reasonable candidate.
 function extractPetPhoto(detail) {
   const pet = detail?.pet || {};
@@ -81,7 +107,7 @@ function extractPetPhoto(detail) {
   return '';
 }
 
-// ─── Owner last-name extractor ───
+//  Owner last-name extractor 
 // MoeGo has shifted field names over time; try several defensively.
 function extractOwnerLastName(appointment, detail) {
   const pet = detail?.pet || {};
@@ -112,14 +138,14 @@ function extractOwnerLastName(appointment, detail) {
   return '';
 }
 
-// ─── Checkouts (existing) ───
+//  Checkouts (existing) 
 app.get('/dogs', (req, res) => {
   const location = req.query.location || 'default';
   const filePath = location === 'default' ? path.join(__dirname, 'dogs.json') : path.join(__dirname, `dogs-${location}.json`);
   if (fs.existsSync(filePath)) { res.json(JSON.parse(fs.readFileSync(filePath, 'utf-8'))); } else { res.json([]); }
 });
 
-// ─── Check-ins (new) ───
+//  Check-ins (new) 
 app.get('/checkins', (req, res) => {
   const location = req.query.location || 'default';
   const filePath = location === 'default' ? path.join(__dirname, 'checkins.json') : path.join(__dirname, `checkins-${location}.json`);
@@ -209,63 +235,63 @@ function mergeDogsIntoFile(fileName, newDogs, timeField = 'checkOutTime') {
   fs.writeFileSync(filePath, JSON.stringify(deduped.slice(0, 5), null, 2));
 }
 
-function updateDogsFromWebhook(appointment) {
+async function updateDogsFromWebhook(appointment) {
   const businessId = appointment.businessId;
   const locationKey = BUSINESS_ID_TO_LOCATION[businessId];
-  if (!locationKey) { console.log(`⚠️ Webhook: unknown businessId ${businessId}`); return; }
+  if (!locationKey) { console.log('Warning Webhook: unknown businessId ' + businessId); return; }
   const checkOutTime = appointment.checkOutTime;
   if (!checkOutTime) return;
+  const ownerLastName = await fetchClientLastName(appointment.customerId);
   const newDogs = (appointment.petServiceDetails || []).map(detail => ({
-    name: detail.pet?.name || 'Unknown', imageUrl: extractPetPhoto(detail),
-    ownerLastName: extractOwnerLastName(appointment, detail),
+    name: detail.pet ? (detail.pet.name || 'Unknown') : 'Unknown',
+    imageUrl: extractPetPhoto(detail), ownerLastName,
     checkOutTime, appointmentId: appointment.id,
-    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || '',
+    serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
     serviceName: extractServiceName(detail)
   }));
   if (newDogs.length === 0) return;
-  mergeDogsIntoFile(`dogs-${locationKey}.json`, newDogs, 'checkOutTime');
+  mergeDogsIntoFile('dogs-' + locationKey + '.json', newDogs, 'checkOutTime');
   if (businessId === config.BUSINESS_ID) mergeDogsIntoFile('dogs.json', newDogs, 'checkOutTime');
-  console.log(`🔔 Webhook: added ${newDogs.length} checkout(s) to dogs-${locationKey}.json`);
+  console.log('Dog Webhook: added ' + newDogs.length + ' checkout(s)');
 }
-
-function updateCheckinsFromWebhook(appointment) {
+async function updateCheckinsFromWebhook(appointment) {
   const businessId = appointment.businessId;
   const locationKey = BUSINESS_ID_TO_LOCATION[businessId];
-  if (!locationKey) { console.log(`⚠️ Webhook: unknown businessId ${businessId}`); return; }
+  if (!locationKey) { console.log('Warning Webhook: unknown businessId ' + businessId); return; }
   const checkInTime = appointment.checkInTime;
   if (!checkInTime) return;
+  const ownerLastName = await fetchClientLastName(appointment.customerId);
   const newDogs = (appointment.petServiceDetails || []).map(detail => ({
-    name: detail.pet?.name || 'Unknown', imageUrl: extractPetPhoto(detail),
-    ownerLastName: extractOwnerLastName(appointment, detail),
+    name: detail.pet ? (detail.pet.name || 'Unknown') : 'Unknown',
+    imageUrl: extractPetPhoto(detail), ownerLastName,
     checkInTime, appointmentId: appointment.id,
-    serviceItemType: (detail.serviceDetails?.[0]?.serviceItemType) || '',
+    serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
     serviceName: extractServiceName(detail)
   }));
   if (newDogs.length === 0) return;
-  mergeDogsIntoFile(`checkins-${locationKey}.json`, newDogs, 'checkInTime');
+  mergeDogsIntoFile('checkins-' + locationKey + '.json', newDogs, 'checkInTime');
   if (businessId === config.BUSINESS_ID) mergeDogsIntoFile('checkins.json', newDogs, 'checkInTime');
-  console.log(`🔔 Webhook: added ${newDogs.length} check-in(s) to checkins-${locationKey}.json`);
+  console.log('Dog Webhook: added ' + newDogs.length + ' check-in(s)');
 }
-
-app.post('/webhook', (req, res) => {
-  if (!verifyWebhookSignature(req)) { console.log('❌ Webhook: invalid signature'); return res.status(401).json({ error: 'Invalid signature' }); }
+app.post('/webhook', async (req, res) => {
+  if (!verifyWebhookSignature(req)) { console.log(' Webhook: invalid signature'); return res.status(401).json({ error: 'Invalid signature' }); }
   const body = req.body;
   const eventType = body.type || body.eventType;
-  if (eventType === 'HEALTH_CHECK') { console.log('✅ Webhook: HEALTH_CHECK received'); return res.status(200).json({ status: 'ok' }); }
+  if (eventType === 'HEALTH_CHECK') { console.log(' Webhook: HEALTH_CHECK received'); return res.status(200).json({ status: 'ok' }); }
 
   let appointment = body.appointment;
   try {
     if (typeof appointment === 'string') appointment = JSON.parse(Buffer.from(appointment, 'base64').toString('utf-8'));
-  } catch (err) { console.error('❌ Webhook: failed to decode appointment:', err.message); return res.status(200).json({ status: 'decode-error' }); }
+  } catch (err) { console.error(' Webhook: failed to decode appointment:', err.message); return res.status(200).json({ status: 'decode-error' }); }
 
   if (eventType === 'APPOINTMENT_FINISHED') {
-    try { if (appointment) updateDogsFromWebhook(appointment); }
-    catch (err) { console.error('❌ Webhook: failed to process finish:', err.message); }
+    try { if (appointment) await updateDogsFromWebhook(appointment); }
+    catch (err) { console.error(' Webhook: failed to process finish:', err.message); }
     return res.status(200).json({ status: 'processed' });
   }
   if (eventType === 'APPOINTMENT_CHECKED_IN' || eventType === 'APPOINTMENT_STARTED' || eventType === 'APPOINTMENT_IN_PROGRESS') {
-    try { if (appointment) updateCheckinsFromWebhook(appointment); }
-    catch (err) { console.error('❌ Webhook: failed to process check-in:', err.message); }
+    try { if (appointment) await updateCheckinsFromWebhook(appointment); }
+    catch (err) { console.error(' Webhook: failed to process check-in:', err.message); }
     return res.status(200).json({ status: 'processed' });
   }
   res.status(200).json({ status: 'ignored' });
@@ -289,18 +315,19 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
     });
     const appointments = response.data.appointments || [];
     let dogs = [];
-    appointments.forEach(appointment => {
+    for (const appointment of appointments) {
       const checkOutTime = appointment.checkOutTime;
-      (appointment.petServiceDetails || []).forEach(detail => {
+      const ownerLastName = await fetchClientLastName(appointment.customerId);
+      for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '', serviceName: extractServiceName(detail) });
-      });
-    });
+        dogs.push({ name: pet.name || 'Unknown', imageUrl: extractPetPhoto(detail), ownerLastName, checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '', serviceName: extractServiceName(detail) });
+      }
+    }
     dogs.sort((a, b) => new Date(b.checkOutTime) - new Date(a.checkOutTime));
     dogs = dogs.slice(0, 5);
     fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
-    console.log(`✅ Updated ${fileName} with ${dogs.length} entries.`);
-  } catch (err) { console.error(`❌ Failed to fetch appointments for ${fileName}:`, err.response?.data || err.message); }
+    console.log(` Updated ${fileName} with ${dogs.length} entries.`);
+  } catch (err) { console.error(` Failed to fetch appointments for ${fileName}:`, err.response?.data || err.message); }
 }
 
 async function fetchCheckinsForLocation(businessId, fileName) {
@@ -323,19 +350,20 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     });
     const appointments = response.data.appointments || [];
     let dogs = [];
-    appointments.forEach(appointment => {
+    for (const appointment of appointments) {
       const checkInTime = appointment.checkInTime;
-      if (!checkInTime) return;
-      (appointment.petServiceDetails || []).forEach(detail => {
+      if (!checkInTime) continue;
+      const ownerLastName = await fetchClientLastName(appointment.customerId);
+      for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name, imageUrl: extractPetPhoto(detail), ownerLastName: extractOwnerLastName(appointment, detail), checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0]?.serviceItemType) || '', serviceName: extractServiceName(detail) });
-      });
-    });
+        dogs.push({ name: pet.name || 'Unknown', imageUrl: extractPetPhoto(detail), ownerLastName, checkInTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '', serviceName: extractServiceName(detail) });
+      }
+    }
     dogs.sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime));
     dogs = dogs.slice(0, 5);
     fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
-    console.log(`✅ Updated ${fileName} with ${dogs.length} entries.`);
-  } catch (err) { console.error(`❌ Failed to fetch check-ins for ${fileName}:`, err.response?.data || err.message); }
+    console.log(` Updated ${fileName} with ${dogs.length} entries.`);
+  } catch (err) { console.error(` Failed to fetch check-ins for ${fileName}:`, err.response?.data || err.message); }
 }
 
 async function fetchAllLocations() {
@@ -367,14 +395,14 @@ function cleanupStaleEntries() {
 }
 
 const mode = config.WEBHOOK_MODE;
-if (mode === 'poll' || mode === 'hybrid') { setInterval(fetchAllLocations, config.POLL_INTERVAL_MS); fetchAllLocations(); console.log(`📡 Polling active (every ${config.POLL_INTERVAL_MS / 1000}s)`); }
-if (mode === 'webhook') { fetchAllLocations(); console.log('📡 Webhook-only mode: initial seed complete, polling disabled'); }
+if (mode === 'poll' || mode === 'hybrid') { setInterval(fetchAllLocations, config.POLL_INTERVAL_MS); fetchAllLocations(); console.log(` Polling active (every ${config.POLL_INTERVAL_MS / 1000}s)`); }
+if (mode === 'webhook') { fetchAllLocations(); console.log(' Webhook-only mode: initial seed complete, polling disabled'); }
 if (mode === 'hybrid' || mode === 'webhook') { setInterval(cleanupStaleEntries, config.CLEANUP_INTERVAL_MS); }
 
 app.listen(config.PORT, () => {
-  console.log(`✅ Server running at http://localhost:${config.PORT} [mode: ${mode}]`);
-  console.log(`📊 Health check: http://localhost:${config.PORT}/health`);
-  console.log(`🐕 Dogs endpoint: http://localhost:${config.PORT}/dogs`);
-  console.log(`🐾 Check-ins endpoint: http://localhost:${config.PORT}/checkins`);
-  if (mode !== 'poll') console.log(`🔔 Webhook endpoint: http://localhost:${config.PORT}/webhook`);
+  console.log(` Server running at http://localhost:${config.PORT} [mode: ${mode}]`);
+  console.log(` Health check: http://localhost:${config.PORT}/health`);
+  console.log(` Dogs endpoint: http://localhost:${config.PORT}/dogs`);
+  console.log(` Check-ins endpoint: http://localhost:${config.PORT}/checkins`);
+  if (mode !== 'poll') console.log(` Webhook endpoint: http://localhost:${config.PORT}/webhook`);
 });
