@@ -211,7 +211,7 @@
       overflow: hidden;
       border-radius: calc(var(--radius-lg) - 4px);
       flex: 1;
-      min-height: 0;
+      min-height: 120px;
       background: var(--surface-raised);
       display: flex;
       align-items: center;
@@ -573,12 +573,7 @@
     }
 
     function filterRecent(dogs, timeField) {
-      const now = Date.now();
-      return dogs.filter(d => {
-        const ts = d[timeField];
-        if (!ts) return false;
-        return (now - new Date(ts).getTime()) < VISIBLE_WINDOW_MS;
-      });
+      return dogs.filter(d => d[timeField]);
     }
 
     async function loadAll() {
