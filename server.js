@@ -215,34 +215,20 @@ app.get('/debug-checkins', async (req, res) => {
 
 app.get('/debug-client', async (req, res) => {
   try {
-    const customerId = req.query.customerId;
-    const appointmentId = req.query.appointmentId;
-    const petId = req.query.petId;
     const results = {};
-    if (appointmentId) {
-      try {
-        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:get',
-          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-          data: JSON.stringify({ id: appointmentId, companyId: config.COMPANY_ID }) });
-        results.apptGet = r.data;
-      } catch (e) { results.apptGetErr = e.message + ' s:' + (e.response && e.response.status); }
-    }
-    if (petId) {
-      try {
-        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/pets:get',
-          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-          data: JSON.stringify({ id: petId, companyId: config.COMPANY_ID }) });
-        results.petGet = r.data;
-      } catch (e) { results.petGetErr = e.message + ' s:' + (e.response && e.response.status); }
-    }
-    if (customerId) {
-      try {
-        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
-          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
-          data: { companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } } });
-        results.clientsList = r.data;
-      } catch (e) { results.clientsListErr = e.message + ' s:' + (e.response && e.response.status); }
-    }
+    try {
+      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+        data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' } }) });
+      results.noFilter = r.data;
+    } catch (e) { results.noFilterErr = e.message + ' s:' + (e.response && e.response.status); }
+    try {
+      const bId = req.query.businessId || 'bizypEi';
+      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+        data: JSON.stringify({ companyId: config.COMPANY_ID, businessIds: [bId], pagination: { pageSize: 1, pageToken: '1' } }) });
+      results.withBiz = r.data;
+    } catch (e) { results.withBizErr = e.message + ' s:' + (e.response && e.response.status); }
     res.json(results);
   } catch (err) { res.json({ error: err.message }); }
 });
