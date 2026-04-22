@@ -64,18 +64,19 @@ async function fetchClientLastName(customerId) {
   if (clientCache.has(customerId)) return clientCache.get(customerId);
   try {
     const r = await axios.request({
-      method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
-      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
-      data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
+      method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
-    const client = r.data && r.data.client ? r.data.client : (r.data || {});
+    const clients = (r.data && r.data.clients) || [];
+    const client = clients[0] || {};
     const ln = client.lastName || client.familyName || client.last_name || '';
     const fn = client.fullName || client.name || '';
     const result = ln || (fn ? fn.trim().split(/\s+/).pop() : '');
     clientCache.set(customerId, result);
     return result;
   } catch (err) {
-    console.error('Client lookup failed for', customerId, ':', err.message);
+    console.error('Client lookup failed for', customerId, ':', err.message, err.response && err.response.status);
     clientCache.set(customerId, '');
     return '';
   }
@@ -218,9 +219,9 @@ app.get('/debug-client', async (req, res) => {
     if (!customerId) return res.json({ error: 'customerId required' });
     clientCache.delete(customerId);
     const r = await axios.request({
-      method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
-      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
-      data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
+      method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
     const ln = await fetchClientLastName(customerId);
     res.json({ raw: r.data, lastName: ln });
