@@ -65,7 +65,7 @@ async function fetchClientLastName(customerId) {
   try {
     const r = await axios.request({
       method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
-      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
       data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
     });
     const client = r.data && r.data.client ? r.data.client : (r.data || {});
@@ -219,7 +219,7 @@ app.get('/debug-client', async (req, res) => {
     clientCache.delete(customerId);
     const r = await axios.request({
       method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
-      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
       data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
     });
     const ln = await fetchClientLastName(customerId);
