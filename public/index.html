@@ -750,38 +750,21 @@
     //  Timer Updates 
     function updateTimers() {
       const now = Date.now();
-      let staleFound = false;
       document.querySelectorAll('.timer').forEach(timer => {
-        const t = new Date(timer.getAttribute('data-time')).getTime();
-        const diffMs = now - t;
+        const ts = timer.getAttribute('data-time');
+        if (!ts) return;
+        const diffMs = now - new Date(ts).getTime();
         const diffMin = Math.floor(diffMs / 60000);
-
-        if (diffMs >= VISIBLE_WINDOW_MS) {
-          // Safety net: if a card ever exceeds the 10-min window, force a prune.
-          staleFound = true;
-          const card = timer.closest('.dog-card');
-          if (card) card.remove();
-          return;
-        }
-
         if (diffMin <= 0) timer.textContent = 'Just now';
-        else if (diffMin === 1) timer.textContent = '1 min ago';
-        else timer.textContent = diffMin + ' min ago';
-
-        const card = timer.closest('.dog-card');
-        if (card) {
-          if (diffMs / 1000 <= HIGHLIGHT_WINDOW_S) card.classList.add('highlight');
-          else card.classList.remove('highlight');
+        else if (diffMin === 1) timer.textContent = '1 min. ago';
+        else if (diffMin < 60) timer.textContent = diffMin + ' min. ago';
+        else {
+          const h = Math.floor(diffMin / 60);
+          const m = diffMin % 60;
+          timer.textContent = h + 'h ' + (m > 0 ? m + 'm ' : '') + 'ago';
         }
       });
-      if (staleFound) {
-        // Reset render state so the next poll fully rebuilds (fills empty states, etc.)
-        renderState.lastRenderedCheckin = '';
-        renderState.lastRenderedCheckout = '';
-        loadAll();
-      }
     }
-
     function playDing() {
       try { document.getElementById('ding-sound').play().catch(() => {}); } catch {}
     }
