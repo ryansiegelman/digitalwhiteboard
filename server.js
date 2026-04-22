@@ -216,27 +216,33 @@ app.get('/debug-checkins', async (req, res) => {
 app.get('/debug-client', async (req, res) => {
   try {
     const customerId = req.query.customerId;
-    if (!customerId) return res.json({ error: 'customerId required' });
-    clientCache.delete(customerId);
+    const appointmentId = req.query.appointmentId;
+    const petId = req.query.petId;
     const results = {};
-    try {
-      const r1 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
-        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-        data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } }) });
-      results.textPlain = r1.data;
-    } catch (e) { results.textPlainErr = e.message + ' status:' + (e.response && e.response.status); }
-    try {
-      const r2 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
-        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
-        data: { companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } } });
-      results.appJson = r2.data;
-    } catch (e) { results.appJsonErr = e.message + ' status:' + (e.response && e.response.status); }
-    try {
-      const r3 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/customers:get',
-        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-        data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID }) });
-      results.customersGet = r3.data;
-    } catch (e) { results.customersGetErr = e.message + ' status:' + (e.response && e.response.status); }
+    if (appointmentId) {
+      try {
+        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:get',
+          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+          data: JSON.stringify({ id: appointmentId, companyId: config.COMPANY_ID }) });
+        results.apptGet = r.data;
+      } catch (e) { results.apptGetErr = e.message + ' s:' + (e.response && e.response.status); }
+    }
+    if (petId) {
+      try {
+        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/pets:get',
+          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+          data: JSON.stringify({ id: petId, companyId: config.COMPANY_ID }) });
+        results.petGet = r.data;
+      } catch (e) { results.petGetErr = e.message + ' s:' + (e.response && e.response.status); }
+    }
+    if (customerId) {
+      try {
+        const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+          headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
+          data: { companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } } });
+        results.clientsList = r.data;
+      } catch (e) { results.clientsListErr = e.message + ' s:' + (e.response && e.response.status); }
+    }
     res.json(results);
   } catch (err) { res.json({ error: err.message }); }
 });
