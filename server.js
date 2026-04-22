@@ -212,6 +212,39 @@ app.get('/debug-checkins', async (req, res) => {
   } catch (err) { res.json({ error: err.response?.data || err.message }); }
 });
 
+app.get('/debug-client', async (req, res) => {
+  try {
+    const customerId = req.query.customerId;
+    if (!customerId) return res.json({ error: 'customerId required' });
+    clientCache.delete(customerId);
+    const r = await axios.request({
+      method: 'post', url: 'https://openapi.moego.pet/v1/clients:get',
+      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID })
+    });
+    const ln = await fetchClientLastName(customerId);
+    res.json({ raw: r.data, lastName: ln });
+  } catch (err) { res.json({ error: err.response && err.response.data || err.message, status: err.response && err.response.status }); }
+});
+
+app.get('/force-refresh-lastnames', async (req, res) => {
+  try {
+    const fileName = 'data/dogs.json';
+    let dogs = JSON.parse(fs.readFileSync(path.join(__dirname, fileName), 'utf8'));
+    let updated = 0;
+    for (const dog of dogs) {
+      if (dog.customerId) {
+        clientCache.delete(dog.customerId);
+        dog.ownerLastName = await fetchClientLastName(dog.customerId);
+        if (dog.ownerLastName) updated++;
+      }
+    }
+    fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
+    res.json({ updated, total: dogs.length, dogs: dogs.map(function(d) { return { name: d.name, customerId: d.customerId, ownerLastName: d.ownerLastName }; }) });
+  } catch (err) { res.json({ error: err.message }); }
+});
+
+
 function verifyWebhookSignature(req) {
   if (!config.WEBHOOK_SECRET) return false;
   const clientId = req.headers['x-moe-client-id'] || '';
@@ -245,7 +278,7 @@ async function updateDogsFromWebhook(appointment) {
   const newDogs = (appointment.petServiceDetails || []).map(detail => ({
     name: detail.pet ? (detail.pet.name || 'Unknown') : 'Unknown',
     imageUrl: extractPetPhoto(detail), ownerLastName,
-    checkOutTime, appointmentId: appointment.id,
+    checkOutTime, appointmentId: appointment.id, customerId: appointment.customerId,
     serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
     serviceName: extractServiceName(detail)
   }));
@@ -320,7 +353,7 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
       const ownerLastName = await fetchClientLastName(appointment.customerId);
       for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
-        dogs.push({ name: pet.name || 'Unknown', imageUrl: extractPetPhoto(detail), ownerLastName, checkOutTime, appointmentId: appointment.id, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '', serviceName: extractServiceName(detail) });
+        dogs.push({ name: pet.name || 'Unknown', imageUrl: extractPetPhoto(detail), ownerLastName, checkOutTime, appointmentId: appointment.id, customerId: appointment.customerId, serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '', serviceName: extractServiceName(detail) });
       }
     }
     dogs.sort((a, b) => new Date(b.checkOutTime) - new Date(a.checkOutTime));
