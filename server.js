@@ -218,14 +218,27 @@ app.get('/debug-client', async (req, res) => {
     const customerId = req.query.customerId;
     if (!customerId) return res.json({ error: 'customerId required' });
     clientCache.delete(customerId);
-    const r = await axios.request({
-      method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
-      headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
-    });
-    const ln = await fetchClientLastName(customerId);
-    res.json({ raw: r.data, lastName: ln });
-  } catch (err) { res.json({ error: err.response && err.response.data || err.message, status: err.response && err.response.status }); }
+    const results = {};
+    try {
+      const r1 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+        data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } }) });
+      results.textPlain = r1.data;
+    } catch (e) { results.textPlainErr = e.message + ' status:' + (e.response && e.response.status); }
+    try {
+      const r2 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'application/json' },
+        data: { companyId: config.COMPANY_ID, pagination: { pageSize: 1 }, filter: { ids: [customerId] } } });
+      results.appJson = r2.data;
+    } catch (e) { results.appJsonErr = e.message + ' status:' + (e.response && e.response.status); }
+    try {
+      const r3 = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/customers:get',
+        headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
+        data: JSON.stringify({ id: customerId, companyId: config.COMPANY_ID }) });
+      results.customersGet = r3.data;
+    } catch (e) { results.customersGetErr = e.message + ' status:' + (e.response && e.response.status); }
+    res.json(results);
+  } catch (err) { res.json({ error: err.message }); }
 });
 
 app.get('/force-refresh-lastnames', async (req, res) => {
