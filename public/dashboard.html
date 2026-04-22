@@ -698,6 +698,7 @@
         'day care': 'Daycare',
         'boarding': 'Boarding',
         'overnight': 'Boarding',
+        'overnight boarding': 'Boarding',
         'grooming': 'Grooming',
         'bath': 'Bath',
         'training': 'Training'
@@ -763,6 +764,15 @@
           const m = diffMin % 60;
           timer.textContent = h + 'h ' + (m > 0 ? m + 'm ' : '') + 'ago';
         }
+      });
+      // Remove checkout cards older than 10 minutes
+      const expiryMs = 10 * 60 * 1000;
+      document.querySelectorAll('#checkout-content .dog-card').forEach(function(card) {
+        const timerEl = card.querySelector('.timer');
+        if (!timerEl) return;
+        var ts = timerEl.dataset.time;
+        if (!ts) return;
+        if (now - new Date(ts).getTime() >= expiryMs) { card.remove(); }
       });
     }
     function playDing() {
