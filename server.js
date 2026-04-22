@@ -217,18 +217,18 @@ app.get('/debug-client', async (req, res) => {
   try {
     const results = {};
     try {
-      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v2/clients:list',
         headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
         data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' } }) });
-      results.noFilter = r.data;
-    } catch (e) { results.noFilterErr = e.message + ' s:' + (e.response && e.response.status); }
+      results.v2list = r.data;
+    } catch (e) { results.v2listErr = e.message + ' s:' + (e.response && e.response.status); }
     try {
-      const bId = req.query.businessId || 'bizypEi';
-      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/clients:list',
+      const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:list',
         headers: { Authorization: `Basic ${config.AUTH_KEY}`, 'Content-Type': 'text/plain' },
-        data: JSON.stringify({ companyId: config.COMPANY_ID, businessIds: [bId], pagination: { pageSize: 1, pageToken: '1' } }) });
-      results.withBiz = r.data;
-    } catch (e) { results.withBizErr = e.message + ' s:' + (e.response && e.response.status); }
+        data: JSON.stringify({ companyId: config.COMPANY_ID, businessIds: ['bizypEi'], pagination: { pageSize: 1, pageToken: '1' }, filter: { statuses: ['FINISHED'] }, includeCustomer: true }) });
+      results.apptCustomer = r.data && r.data.appointments && r.data.appointments[0] && r.data.appointments[0].customer;
+      results.apptKeys = r.data && r.data.appointments && r.data.appointments[0] && Object.keys(r.data.appointments[0]).join(',');
+    } catch (e) { results.apptCustomerErr = e.message + ' s:' + (e.response && e.response.status); }
     res.json(results);
   } catch (err) { res.json({ error: err.message }); }
 });
