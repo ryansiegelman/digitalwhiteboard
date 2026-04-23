@@ -187,7 +187,7 @@ app.get('/debug-checkins', async (req, res) => {
       data: JSON.stringify({
         pagination: { pageSize: 5, pageToken: '1' },
         companyId: companyId, businessIds: [businessId],
-        filter: { statuses: ['IN_PROGRESS'] }
+          filter: { statuses: [req.query.status || 'CHECKED_IN'] }
       })
     });
     res.json(r.data);
@@ -379,7 +379,7 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     const baseBody = {
       companyId: config.COMPANY_ID,
       businessIds: [businessId],
-      filter: { statuses: ['IN_PROGRESS'] }
+      filter: { statuses: ['CHECKED_IN'] }
     };
     const appointments = await fetchAllAppointmentPages(baseBody);
     let dogs = [];
