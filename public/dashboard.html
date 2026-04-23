@@ -424,18 +424,12 @@
           document.body.appendChild(el);
         }
         const r = window._lastApiResponse || {};
-        let txt = '=== DEBUG ===
-loc: ' + currentLocation + '
-
-';
+        let txt = '=== DEBUG ===\nloc: ' + currentLocation + '\n\n';
         for (const [ep,d] of Object.entries(r)) {
-          txt += ep + ' (' + d.normalized.length + ' items) @ ' + d.ts + '
-';
-          if (d.normalized[0]) txt += 'keys: ' + Object.keys(d.normalized[0]).join(', ') + '
-';
-          txt += '
-';
-        }
+          txt += ep + ' (' + d.normalized.length + ' items) @ ' + d.ts + '\n';
+          if (d.normalized[0]) txt += 'keys: ' + Object.keys(d.normalized[0]).join(', ') + '\n';
+          txt += '\n';
+    }
         el.textContent = txt; el.style.display = 'block';
       });
     })();
