@@ -171,7 +171,7 @@
     function formatServiceType(serviceItemType, serviceName) {
       const raw = (serviceName || serviceItemType || '').trim();
       const sl = raw.toLowerCase().replace(/_/g,' ');
-    if (sl === 'daycare' || sl === 'day care' || sl === 'full daycare') return 'Daycare';
+    if (sl === 'daycare' || sl === 'day care' || sl === 'full daycare' || sl === 'hourly daycare' || sl === 'half daycare') return 'Daycare';
     if (sl === 'boarding' || sl === 'overnight' || sl === 'overnight boarding') return 'Boarding';
     if (sl === 'tt: phase 1' || sl === 'tt phase 1' || sl === 'training phase 1' || sl === 'training: phase 1') return 'TT: Phase 1';
     if (sl === 'tt: phase 2' || sl === 'tt phase 2' || sl === 'training phase 2' || sl === 'training: phase 2') return 'TT: Phase 2';
@@ -341,8 +341,8 @@
     let wCi, wCo;
     const SLIDE_THRESHOLD = 3;
     if (ci === 0 && co === 0) { wCi = 1; wCo = 1; }
-    else if (ci === 0)        { wCi = co >= SLIDE_THRESHOLD ? 0.15 : 1; wCo = co >= SLIDE_THRESHOLD ? Math.max(1, co) : 1; }
-    else if (co === 0)        { wCi = ci >= SLIDE_THRESHOLD ? Math.max(1, ci) : 1; wCo = ci >= SLIDE_THRESHOLD ? 0.15 : 1; }
+    else if (ci === 0)        { wCi = co >= SLIDE_THRESHOLD ? 1 : 1; wCo = co >= SLIDE_THRESHOLD ? Math.max(1, co) : 1; }
+    else if (co === 0)        { wCi = ci >= SLIDE_THRESHOLD ? Math.max(1, ci) : 1; wCo = ci >= SLIDE_THRESHOLD ? 1 : 1; }
     else                      { wCi = Math.max(1, ci); wCo = Math.max(1, co); }      document.getElementById('panel-checkin').style.setProperty('--weight', wCi);
       document.getElementById('panel-checkout').style.setProperty('--weight', wCo);
 
