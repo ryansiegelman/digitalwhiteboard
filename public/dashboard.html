@@ -43,10 +43,10 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
 .dog-photo { position:relative; overflow:hidden; border-radius:calc(var(--radius-lg) - 4px); flex:1; min-height:0; background:var(--surface-raised); display:flex; align-items:center; justify-content:center; }
 .dog-photo img { width:100%; height:100%; object-fit:contain; object-position:center center; display:block; background:var(--surface-raised); }
 .dog-info { padding:0.4rem 0.5rem 0.25rem; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:0; }
-.feature-label { display:block; width:100%; text-align:center; font-size:0.7rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.1rem; }
+.feature-label { display:none; }
 .panel-checkin .feature-label { color:var(--checkin-color); }
 .panel-checkout .feature-label { color:var(--accent); }
-.dog-name { font-family:var(--font-display); font-weight:400; color:var(--text); line-height:1; text-transform:uppercase; font-size:2rem; text-align:center; }
+.dog-name { font-family:var(--font-display); font-weight:400; color:var(--text); line-height:1; text-transform:uppercase; font-size:2.8rem; text-align:center; }
 .timer { font-size:0.75rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--timer-color); margin-top:0.15rem; }
 .dog-service-row { display:flex; justify-content:center; width:100%; margin-top:0.25rem; }
 .service-type { display:inline-flex; flex-direction:column; align-items:center; padding:0.25rem 0.85rem; border-radius:999px; border:1px solid var(--ddl-blue); background:var(--ddl-blue); font-size:0.95rem; font-weight:700; letter-spacing:0.08em; color:var(--text); white-space:nowrap; line-height:1.3; }
