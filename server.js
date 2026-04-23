@@ -99,7 +99,13 @@ app.get('/dogs', (req, res) => {
     ? path.join(__dirname, 'dogs.json')
     : path.join(__dirname, 'dogs-' + location + '.json');
   if (fs.existsSync(filePath)) {
-    res.json(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
+    const all = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const cutoff = Date.now() - 10 * 60 * 1000;
+    const recent = all.filter(function(d) {
+      const t = d.checkOutTime || d.check_out_time;
+      return t && new Date(t).getTime() >= cutoff;
+    });
+    res.json(recent);
   } else {
     res.json([]);
   }
