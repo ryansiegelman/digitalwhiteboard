@@ -1,458 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0908">
-  <title>Down Dog Lodge &mdash; Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0a0908;
-      --surface: #13110e;
-      --surface-raised: #1a1814;
-      --border: #23201a;
-      --border-light: #302b23;
-      --text: #ede8df;
-      --text-secondary: #9e968a;
-      --text-muted: #5e584e;
-      --accent: #ede8df;
-      --accent-glow: rgba(237,232,223,0.35);
-      --checkin-color: #ede8df;
-      --checkin-glow: rgba(237,232,223,0.35);
-      --ddl-blue: #1e3a6b;
-      --timer-color: #4a6fa5;
-      --radius-lg: 20px;
-      --font-display: 'DM Serif Display', Georgia, serif;
-      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-    }
-    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    body {
-      background:var(--bg); color:var(--text); font-family:var(--font-body);
-      height:100vh; overflow:hidden; display:flex; flex-direction:column;
-      -webkit-font-smoothing:antialiased;
-    }
-    body::after {
-      content:''; position:fixed; inset:0;
-      background:radial-gradient(ellipse at 25% 55%,rgba(237,232,223,0.02) 0%,transparent 55%);
-      pointer-events:none; z-index:0;
-    }
-    .header {
-      position:relative; padding:1.1rem 2rem; display:flex;
-      justify-content:space-between; align-items:center; flex-shrink:0; z-index:10;
-    }
-    .header::after {
-      content:''; position:absolute; bottom:0; left:2rem; right:2rem; height:1px;
-      background:linear-gradient(90deg,transparent,var(--border) 15%,var(--border-light) 40%,rgba(237,232,223,0.25) 50%,var(--border-light) 60%,var(--border) 85%,transparent);
-    }
-    .brand { display:flex; align-items:center; gap:0.9rem; }
-    .brand-logo { height:3.2rem; width:auto; }
-    .brand-divider { width:1px; height:1.5rem; background:var(--border-light); }
-    .brand .subtitle { font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--accent); padding-top:0.1rem; }
-    .datetime { display:flex; flex-direction:column; align-items:flex-end; gap:0.15rem; line-height:1; font-variant-numeric:tabular-nums; }
-    .datetime .dt-time { font-family:var(--font-display); font-size:1.9rem; color:var(--text); }
-    .datetime .dt-date { font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-secondary); }
-    #main-container {
-      flex:1; display:flex; flex-direction:row; gap:1rem;
-      padding:1rem 1.5rem 1.5rem; overflow:hidden; position:relative; z-index:1; min-height:0;
-    }
-    .panel {
-      display:flex; flex-direction:column;
-      flex:1 1 0; min-width:12rem; overflow:hidden;
-      border:2px solid var(--text); border-radius:var(--radius-lg);
-      padding:0.9rem 1rem; background:rgba(255,255,255,0.01);
-    }
-    .panel-header {
-      text-align:center; font-size:1.5rem; font-weight:700;
-      text-transform:uppercase; letter-spacing:0.18em; padding:0.2rem 0 0.8rem; flex-shrink:0;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .panel-checkin .panel-header { color:var(--checkin-color); }
-    .panel-checkout .panel-header { color:var(--accent); }
-    .panel-content { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
-    .dog-card {
-      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-      padding:0.25rem; display:flex; flex-direction:column;
-      transition:transform 0.3s ease,box-shadow 0.3s ease,border-color 0.3s ease;
-      overflow:hidden; min-width:0; min-height:0; position:relative;
-    }
-    .dog-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.25); }
-    .dog-photo {
-      position:relative; overflow:hidden; border-radius:calc(var(--radius-lg) - 4px);
-      flex:1; min-height:0; background:var(--surface-raised);
-      display:flex; align-items:center; justify-content:center;
-    }
-    .dog-photo img {
-      width:100%; height:100%; object-fit:cover; object-position:center top; display:block; background:var(--surface-raised);
-    }
-    .dog-info {
-      padding:0.4rem 0.5rem 0.25rem; flex-shrink:0;
-      display:flex; flex-direction:column; align-items:center; gap:0;
-    }
-    .feature-label {
-      display:block; width:100%; text-align:center;
-      font-size:0.7rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.1rem;
-    }
-    .panel-checkin .feature-label { color:var(--checkin-color); }
-    .panel-checkout .feature-label { color:var(--accent); }
-    .dog-name {
-      font-family:var(--font-display); font-weight:400; color:var(--text);
-      line-height:1; text-transform:uppercase; font-size:2rem; text-align:center;
-    }
-    .timer {
-      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
-      text-transform:uppercase; color:var(--timer-color); margin-top:0.15rem;
-    }
-    .dog-service-row { display:flex; justify-content:center; width:100%; margin-top:0.25rem; }
-    .service-type {
-      display:inline-flex; flex-direction:column; align-items:center;
-      padding:0.25rem 0.85rem; border-radius:999px;
-      border:1px solid var(--ddl-blue); background:var(--ddl-blue);
-      font-size:0.95rem; font-weight:700; letter-spacing:0.08em; color:var(--text); white-space:nowrap;
-      line-height:1.3;
-    }
-    .service-location {
-      font-size:0.65rem; font-weight:600; letter-spacing:0.1em;
-      text-transform:uppercase; color:rgba(237,232,223,0.7); margin-top:0.1rem;
-    }
-    .dismiss-overlay {
-      position:absolute; inset:0; border-radius:calc(var(--radius-lg) - 4px);
-      background:rgba(255,255,255,0); display:flex; align-items:center; justify-content:center;
-      opacity:0; transition:opacity 0.2s ease, background 0.2s ease; cursor:pointer; z-index:10;
-    }
-    .dog-card:hover .dismiss-overlay { opacity:1; background:rgba(255,255,255,0.18); }
-    .dismiss-check { font-size:2.5rem; color:#fff; font-weight:300; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.4); }
-    @keyframes card-exit { 0%{opacity:1;transform:scale(1)} 60%{opacity:0.3;transform:scale(0.92) translateY(-6px)} 100%{opacity:0;transform:scale(0.88) translateY(-10px)} }
-    .card-dismissed { animation:card-exit 0.4s cubic-bezier(0.22,1,0.36,1) forwards; pointer-events:none; }
-    .dogs-grid {
-      flex:1; display:grid;
-      grid-template-columns:repeat(var(--cols,1),1fr);
-      grid-auto-rows:1fr; gap:0.75rem; min-height:0; align-content:stretch;
-    }
-    .panel-checkout .dog-card.highlight { border-color:var(--accent); animation:glow-co 2.5s ease-in-out infinite; }
-    .panel-checkin .dog-card.highlight { border-color:var(--checkin-color); animation:glow-ci 2.5s ease-in-out infinite; }
-    @keyframes glow-co { 0%,100%{box-shadow:0 0 0 0 var(--accent-glow)} 50%{box-shadow:0 0 24px 2px rgba(237,232,223,0.14)} }
-    @keyframes glow-ci { 0%,100%{box-shadow:0 0 0 0 var(--checkin-glow)} 50%{box-shadow:0 0 24px 2px rgba(237,232,223,0.14)} }
-    .animate-in { animation:card-enter 0.5s cubic-bezier(0.22,1,0.36,1) both; animation-delay:calc(var(--i,0)*0.07s); }
-    @keyframes card-enter { from{opacity:0;transform:translateY(20px) scale(0.96)} to{opacity:1;transform:none} }
-    .empty-state,.loading-state {
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      flex:1; width:100%; height:100%; text-align:center;
-    }
-    .empty-check { display:block; font-size:3rem; line-height:1; color:#ffffff; font-weight:300; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0908">
+<title>Down Dog Lodge &mdash; Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0908; --surface: #13110e; --surface-raised: #1a1814;
+  --border: #23201a; --border-light: #302b23;
+  --text: #ede8df; --text-secondary: #9e968a; --text-muted: #5e584e;
+  --accent: #ede8df; --accent-glow: rgba(237,232,223,0.35);
+  --checkin-color: #ede8df; --checkin-glow: rgba(237,232,223,0.35);
+  --ddl-blue: #1e3a6b; --timer-color: #4a6fa5;
+  --radius-lg: 20px;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); height:100vh; overflow:hidden; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+body::after { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 25% 55%,rgba(237,232,223,0.02) 0%,transparent 55%); pointer-events:none; z-index:0; }
+.header { position:relative; padding:1.1rem 2rem; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; z-index:10; }
+.header::after { content:''; position:absolute; bottom:0; left:2rem; right:2rem; height:1px; background:linear-gradient(90deg,transparent,var(--border) 15%,var(--border-light) 40%,rgba(237,232,223,0.25) 50%,var(--border-light) 60%,var(--border) 85%,transparent); }
+.brand { display:flex; align-items:center; gap:0.9rem; }
+.brand-logo { height:3.2rem; width:auto; }
+.brand-divider { width:1px; height:1.5rem; background:var(--border-light); }
+.brand .subtitle { font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--accent); padding-top:0.1rem; }
+.datetime { display:flex; flex-direction:column; align-items:flex-end; gap:0.15rem; line-height:1; font-variant-numeric:tabular-nums; }
+.datetime .dt-time { font-family:var(--font-display); font-size:1.9rem; color:var(--text); }
+.datetime .dt-date { font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-secondary); }
+#main-container { flex:1; display:flex; flex-direction:row; gap:1rem; padding:1rem 1.5rem 1.5rem; overflow:hidden; position:relative; z-index:1; min-height:0; }
+.panel { display:flex; flex-direction:column; flex:1 1 0; min-width:12rem; overflow:hidden; border:2px solid var(--text); border-radius:var(--radius-lg); padding:0.9rem 1rem; background:rgba(255,255,255,0.01); }
+.panel-header { text-align:center; font-size:1.5rem; font-weight:700; text-transform:uppercase; letter-spacing:0.18em; padding:0.2rem 0 0.8rem; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.panel-checkin .panel-header { color:var(--checkin-color); }
+.panel-checkout .panel-header { color:var(--accent); }
+.panel-content { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+.dog-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:0.25rem; display:flex; flex-direction:column; transition:transform 0.3s ease,box-shadow 0.3s ease,border-color 0.3s ease; overflow:hidden; min-width:0; min-height:0; position:relative; }
+.dog-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+.dog-photo { position:relative; overflow:hidden; border-radius:calc(var(--radius-lg) - 4px); flex:1; min-height:0; background:var(--surface-raised); display:flex; align-items:center; justify-content:center; }
+.dog-photo img { width:100%; height:100%; object-fit:contain; object-position:center center; display:block; background:var(--surface-raised); }
+.dog-info { padding:0.4rem 0.5rem 0.25rem; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:0; }
+.feature-label { display:block; width:100%; text-align:center; font-size:0.7rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.1rem; }
+.panel-checkin .feature-label { color:var(--checkin-color); }
+.panel-checkout .feature-label { color:var(--accent); }
+.dog-name { font-family:var(--font-display); font-weight:400; color:var(--text); line-height:1; text-transform:uppercase; font-size:2rem; text-align:center; }
+.timer { font-size:0.75rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--timer-color); margin-top:0.15rem; }
+.dog-service-row { display:flex; justify-content:center; width:100%; margin-top:0.25rem; }
+.service-type { display:inline-flex; flex-direction:column; align-items:center; padding:0.25rem 0.85rem; border-radius:999px; border:1px solid var(--ddl-blue); background:var(--ddl-blue); font-size:0.95rem; font-weight:700; letter-spacing:0.08em; color:var(--text); white-space:nowrap; line-height:1.3; }
+.service-location { font-size:0.65rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(237,232,223,0.7); margin-top:0.1rem; }
+/* Dismiss overlay - more visible white, bigger checkmark */
+.dismiss-overlay { position:absolute; inset:0; border-radius:calc(var(--radius-lg) - 4px); background:rgba(255,255,255,0); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s ease, background 0.2s ease; cursor:pointer; z-index:10; }
+.dog-card:hover .dismiss-overlay { opacity:1; background:rgba(255,255,255,0.55); }
+.dismiss-check { font-size:5rem; color:#1a1a1a; font-weight:900; line-height:1; filter:drop-shadow(0 2px 6px rgba(255,255,255,0.6)); }
+/* Exit animation - more expressive */
+@keyframes card-exit {
+  0%  { opacity:1; transform:scale(1) translateY(0) rotate(0deg); }
+  25% { opacity:0.8; transform:scale(1.06) translateY(-8px) rotate(-1deg); }
+  60% { opacity:0.3; transform:scale(0.85) translateY(-18px) rotate(2deg); }
+  100%{ opacity:0; transform:scale(0.7) translateY(-30px) rotate(-3deg); }
+}
+.card-dismissed { animation:card-exit 0.55s cubic-bezier(0.22,1,0.36,1) forwards; pointer-events:none; }
+.dogs-grid { flex:1; display:grid; grid-template-columns:repeat(var(--cols,1),1fr); grid-auto-rows:1fr; gap:0.75rem; min-height:0; align-content:stretch; }
+.panel-checkout .dog-card.highlight { border-color:var(--accent); animation:glow-co 2.5s ease-in-out infinite; }
+.panel-checkin .dog-card.highlight { border-color:var(--checkin-color); animation:glow-ci 2.5s ease-in-out infinite; }
+@keyframes glow-co { 0%,100%{box-shadow:0 0 0 0 var(--accent-glow)} 50%{box-shadow:0 0 24px 2px rgba(237,232,223,0.14)} }
+@keyframes glow-ci { 0%,100%{box-shadow:0 0 0 0 var(--checkin-glow)} 50%{box-shadow:0 0 24px 2px rgba(237,232,223,0.14)} }
+.animate-in { animation:card-enter 0.5s cubic-bezier(0.22,1,0.36,1) both; animation-delay:calc(var(--i,0)*0.07s); }
+@keyframes card-enter { from{opacity:0;transform:translateY(20px) scale(0.96)} to{opacity:1;transform:none} }
+.empty-state,.loading-state { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; width:100%; height:100%; text-align:center; }
+.empty-check { display:block; font-size:3rem; line-height:1; color:#ffffff; font-weight:300; }
+</style>
 </head>
 <body>
-  <header class="header">
-    <div class="brand">
-      <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
-      <span class="brand-divider"></span>
-      <span class="subtitle">Live</span>
+<header class="header">
+  <div class="brand">
+    <img class="brand-logo" src="https://moegonew.s3-us-west-2.amazonaws.com/Public/Uploads/1773773054ea0084a5d186418a95d10c98a1451933.webp" alt="Down Dog Lodge">
+    <span class="brand-divider"></span>
+    <span class="subtitle">Live</span>
+  </div>
+  <div class="datetime" id="datetime">
+    <span class="dt-time" id="dt-time">--:--</span>
+    <span class="dt-date" id="dt-date"></span>
+  </div>
+</header>
+<main id="main-container">
+  <section class="panel panel-checkin" id="panel-checkin">
+    <h2 class="panel-header">Checking In</h2>
+    <div class="panel-content" id="checkin-content">
+      <div class="loading-state"><span class="empty-check">&#10003;</span></div>
     </div>
-    <div class="datetime" id="datetime">
-      <span class="dt-time" id="dt-time">--:--</span>
-      <span class="dt-date" id="dt-date"></span>
+  </section>
+  <section class="panel panel-checkout" id="panel-checkout">
+    <h2 class="panel-header">Checking Out</h2>
+    <div class="panel-content" id="checkout-content">
+      <div class="loading-state"><span class="empty-check">&#10003;</span></div>
     </div>
-  </header>
-  <main id="main-container">
-    <section class="panel panel-checkin" id="panel-checkin">
-      <h2 class="panel-header">Checking In</h2>
-      <div class="panel-content" id="checkin-content">
-        <div class="loading-state"><span class="empty-check">&#10003;</span></div>
-      </div>
-    </section>
-    <section class="panel panel-checkout" id="panel-checkout">
-      <h2 class="panel-header">Checking Out</h2>
-      <div class="panel-content" id="checkout-content">
-        <div class="loading-state"><span class="empty-check">&#10003;</span></div>
-      </div>
-    </section>
-  </main>
-  <audio id="ding-sound" preload="auto"><source src="ding.mp3" type="audio/mpeg"></audio>
-  <script>
-    const API_BASE_URL = window.location.origin;
-    const HIGHLIGHT_WINDOW_S = 60;
-    const POLL_INTERVAL_MS = 1000;
-    const TIMER_INTERVAL_MS = 5000;
-    const EXPIRY_MS = 10 * 60 * 1000;
-    const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
-    let currentLocation = null;
-    let lastCheckoutId = null;
-    let lastCheckinId = null;
-    const renderState = { checkins: '', checkouts: '' };
-    const clearedIds = new Set();
+  </section>
+</main>
+<audio id="ding-sound" preload="auto"><source src="ding.mp3" type="audio/mpeg"></audio>
+<script>
+const API_BASE_URL = window.location.origin;
+const HIGHLIGHT_WINDOW_S = 60;
+const POLL_INTERVAL_MS = 1000;
+const TIMER_INTERVAL_MS = 5000;
+const EXPIRY_MS = 10 * 60 * 1000;
+const DISMISSED_POLL_MS = 3000;
+const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
+let currentLocation = null;
+let lastCheckoutId = null;
+let lastCheckinId = null;
+const renderState = { checkins: '', checkouts: '' };
+// clearedIds is the local set; server is source of truth for cross-screen
+const clearedIds = new Set();
 
-    function formatServiceType(sit, sn) {
-      const raw = (sn || sit || '').trim();
-      const sl = raw.toLowerCase().replace(/_/g,' ');
-      if (sl === 'daycare' || sl === 'day care' || sl === 'full daycare' || sl === 'hourly daycare' || sl === 'half daycare') return 'Daycare';
-      if (sl === 'boarding' || sl === 'overnight' || sl === 'overnight boarding') return 'Boarding';
-      if (sl === 'tt: phase 1' || sl === 'tt phase 1' || sl === 'training phase 1' || sl === 'training: phase 1') return 'TT: Phase 1';
-      if (sl === 'tt: phase 2' || sl === 'tt phase 2' || sl === 'training phase 2' || sl === 'training: phase 2') return 'TT: Phase 2';
-      const s2 = (sit || '').toLowerCase().replace(/_/g,' ');
-      if (s2.includes('phase 1') || s2.includes('tt1')) return 'TT: Phase 1';
-      if (s2.includes('phase 2') || s2.includes('tt2')) return 'TT: Phase 2';
-      if (raw) return raw.replace(/w/g, function(c){ return c.toUpperCase(); });
-      return 'Reservation';
+function formatServiceType(sit, sn) {
+  const raw = (sn || sit || '').trim();
+  const sl = raw.toLowerCase().replace(/_/g,' ');
+  if (sl === 'daycare' || sl === 'day care' || sl === 'full daycare' || sl === 'hourly daycare' || sl === 'half daycare') return 'Daycare';
+  if (sl === 'boarding' || sl === 'overnight' || sl === 'overnight boarding') return 'Boarding';
+  if (sl === 'tt: phase 1' || sl === 'tt phase 1' || sl === 'training phase 1' || sl === 'training: phase 1') return 'TT: Phase 1';
+  if (sl === 'tt: phase 2' || sl === 'tt phase 2' || sl === 'training phase 2' || sl === 'training: phase 2') return 'TT: Phase 2';
+  const s2 = (sit || '').toLowerCase().replace(/_/g,' ');
+  if (s2.includes('phase 1') || s2.includes('tt1')) return 'TT: Phase 1';
+  if (s2.includes('phase 2') || s2.includes('tt2')) return 'TT: Phase 2';
+  if (raw) return raw.replace(/\w/g, function(c){ return c.toUpperCase(); });
+  return 'Reservation';
+}
+
+function getLodgingLocation(dog) {
+  const pen = dog.lodgingLocation || dog.pen || dog.kennel || dog.resource || dog.resourceName || '';
+  if (!pen) return '';
+  const p = pen.toString().toLowerCase();
+  if (p.includes('big') || p.includes('large')) return 'Big Pen';
+  if (p.includes('small') || p.includes('little')) return 'Small Pen';
+  return pen;
+}
+
+async function fetchList(endpoint) {
+  if (DEMO_MODE) return demoList(endpoint);
+  try {
+    const res = await fetch(API_BASE_URL + '/' + endpoint + '?location=' + currentLocation + '&_=' + Date.now());
+    if (!res.ok) return [];
+    const raw = await res.json();
+    let arr = Array.isArray(raw) ? raw : Array.isArray(raw.data) ? raw.data : Array.isArray(raw.checkins) ? raw.checkins : Array.isArray(raw.checkouts) ? raw.checkouts : Array.isArray(raw.dogs) ? raw.dogs : [];
+    arr = arr.map(function(d) {
+      const n = Object.assign({}, d);
+      if (n.check_in_time && !n.checkInTime) n.checkInTime = n.check_in_time;
+      if (n.check_out_time && !n.checkOutTime) n.checkOutTime = n.check_out_time;
+      if (n.appointment_id && !n.appointmentId) n.appointmentId = n.appointment_id;
+      if (n.image_url && !n.imageUrl) n.imageUrl = n.image_url;
+      if (n.service_name && !n.serviceName) n.serviceName = n.service_name;
+      if (n.service_item_type && !n.serviceItemType) n.serviceItemType = n.service_item_type;
+      return n;
+    });
+    window._lastApiResponse = window._lastApiResponse || {};
+    window._lastApiResponse[endpoint] = { raw, normalized: arr, ts: new Date().toISOString() };
+    return arr;
+  } catch(err) { console.error('fetchList ' + endpoint, err); return []; }
+}
+
+// Cross-screen dismissed sync
+async function syncDismissed() {
+  if (DEMO_MODE) return;
+  if (!currentLocation) return;
+  try {
+    const res = await fetch(API_BASE_URL + '/dismissed?location=' + currentLocation + '&_=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const serverIds = data.dismissed || [];
+    let changed = false;
+    serverIds.forEach(function(id) {
+      if (!clearedIds.has(id)) { clearedIds.add(id); changed = true; }
+    });
+    if (changed) {
+      renderState.checkins = '';
+      renderState.checkouts = '';
     }
+  } catch(e) {}
+}
 
-    function getLodgingLocation(dog) {
-      const pen = dog.lodgingLocation || dog.pen || dog.kennel || dog.resource || dog.resourceName || '';
-      if (!pen) return '';
-      const p = pen.toString().toLowerCase();
-      if (p.includes('big') || p.includes('large')) return 'Big Pen';
-      if (p.includes('small') || p.includes('little')) return 'Small Pen';
-      return pen;
+async function postDismissed(id) {
+  if (DEMO_MODE || !id) return;
+  try {
+    await fetch(API_BASE_URL + '/dismissed?location=' + currentLocation, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    });
+  } catch(e) {}
+}
+
+function filterRecent(dogs, tf) {
+  return dogs.filter(function(d){ return d[tf]; });
+}
+
+function pruneExpiredCards() {
+  const now = Date.now();
+  let removed = false;
+  document.querySelectorAll('#checkout-content .dog-card').forEach(function(card) {
+    const el = card.querySelector('.timer');
+    if (!el) return;
+    const ts = el.dataset.time;
+    if (ts && now - new Date(ts).getTime() >= EXPIRY_MS) { card.remove(); removed = true; }
+  });
+  if (removed) {
+    renderState.checkouts = '';
+    const c = document.getElementById('checkout-content');
+    const g = c && c.querySelector('.dogs-grid');
+    if (!g || g.children.length === 0) c.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
+  }
+}
+
+function updateTimers() {
+  const now = Date.now();
+  document.querySelectorAll('.timer[data-time]').forEach(function(timer) {
+    const ts = timer.getAttribute('data-time');
+    if (!ts) return;
+    const diffMin = Math.floor((now - new Date(ts).getTime()) / 60000);
+    if (diffMin <= 0) timer.textContent = 'Just now';
+    else if (diffMin === 1) timer.textContent = '1 min. ago';
+    else if (diffMin < 60) timer.textContent = diffMin + ' min. ago';
+    else { const h = Math.floor(diffMin/60), m = diffMin%60; timer.textContent = h+'h '+(m>0?m+'m ':' ')+'ago'; }
+  });
+  pruneExpiredCards();
+}
+
+function dismissCard(card, containerId, stateKey) {
+  card.classList.add('card-dismissed');
+  const aptId = card.dataset.aptId;
+  if (aptId) {
+    clearedIds.add(aptId);
+    postDismissed(aptId);
+  }
+  setTimeout(function() {
+    card.remove();
+    renderState[stateKey] = '';
+    const content = document.getElementById(containerId);
+    if (!content) return;
+    const grid = content.querySelector('.dogs-grid');
+    if (!grid || grid.children.length === 0) {
+      content.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
+    } else {
+      const n = grid.children.length;
+      grid.style.setProperty('--cols', n===1?1:n<=4?2:n<=9?3:4);
     }
+  }, 580);
+}
 
-    async function fetchList(endpoint) {
-      if (DEMO_MODE) return demoList(endpoint);
-      try {
-        const res = await fetch(API_BASE_URL + '/' + endpoint + '?location=' + currentLocation + '&_=' + Date.now());
-        if (!res.ok) return [];
-        const raw = await res.json();
-        let arr = Array.isArray(raw) ? raw : Array.isArray(raw.data) ? raw.data : Array.isArray(raw.checkins) ? raw.checkins : Array.isArray(raw.checkouts) ? raw.checkouts : Array.isArray(raw.dogs) ? raw.dogs : [];
-        arr = arr.map(function(d) {
-          const n = Object.assign({}, d);
-          if (n.check_in_time && !n.checkInTime) n.checkInTime = n.check_in_time;
-          if (n.check_out_time && !n.checkOutTime) n.checkOutTime = n.check_out_time;
-          if (n.appointment_id && !n.appointmentId) n.appointmentId = n.appointment_id;
-          if (n.image_url && !n.imageUrl) n.imageUrl = n.image_url;
-          if (n.service_name && !n.serviceName) n.serviceName = n.service_name;
-          if (n.service_item_type && !n.serviceItemType) n.serviceItemType = n.service_item_type;
-          return n;
-        });
-        window._lastApiResponse = window._lastApiResponse || {};
-        window._lastApiResponse[endpoint] = { raw, normalized: arr, ts: new Date().toISOString() };
-        return arr;
-      } catch(err) { console.error('fetchList ' + endpoint, err); return []; }
+function createDogCard(dog, tf, labelText, containerId, stateKey) {
+  const card = document.createElement('article');
+  card.className = 'dog-card';
+  card.dataset.aptId = dog.appointmentId || dog.name || '';
+  if ((Date.now() - new Date(dog[tf]).getTime()) / 1000 <= HIGHLIGHT_WINDOW_S) card.classList.add('highlight');
+  const photoWrap = document.createElement('div');
+  photoWrap.className = 'dog-photo';
+  const img = document.createElement('img');
+  img.src = dog.imageUrl || 'placeholder.svg';
+  img.alt = dog.name || '';
+  img.decoding = 'async';
+  img.onerror = function(){ img.onerror=null; img.src='placeholder.svg'; };
+  photoWrap.appendChild(img);
+  const overlay = document.createElement('div');
+  overlay.className = 'dismiss-overlay';
+  const ck = document.createElement('span');
+  ck.className = 'dismiss-check';
+  ck.textContent = '\u2713';
+  overlay.appendChild(ck);
+  overlay.addEventListener('click', function(e){ e.stopPropagation(); dismissCard(card, containerId, stateKey); });
+  photoWrap.appendChild(overlay);
+  const info = document.createElement('div');
+  info.className = 'dog-info';
+  const lbl = document.createElement('span');
+  lbl.className = 'feature-label';
+  lbl.textContent = labelText;
+  info.appendChild(lbl);
+  const nm = document.createElement('div');
+  nm.className = 'dog-name';
+  nm.textContent = dog.name || '';
+  info.appendChild(nm);
+  const timer = document.createElement('div');
+  timer.className = 'timer';
+  timer.setAttribute('data-time', dog[tf]);
+  info.appendChild(timer);
+  const serviceRow = document.createElement('div');
+  serviceRow.className = 'dog-service-row';
+  const type = document.createElement('span');
+  type.className = 'service-type';
+  const svcLbl = document.createElement('span');
+  svcLbl.textContent = formatServiceType(dog.serviceItemType, dog.serviceName);
+  type.appendChild(svcLbl);
+  const loc = getLodgingLocation(dog);
+  if (loc) {
+    const locSpan = document.createElement('span');
+    locSpan.className = 'service-location';
+    locSpan.textContent = loc;
+    type.appendChild(locSpan);
+  }
+  serviceRow.appendChild(type);
+  info.appendChild(serviceRow);
+  card.appendChild(photoWrap);
+  card.appendChild(info);
+  return card;
+}
+
+function renderPanel(containerId, dogs, tf, labelText, stateKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const visible = dogs.filter(function(d){ return !clearedIds.has(d.appointmentId || d.name || ''); });
+  const ids = visible.map(function(d){ return d.appointmentId || d.name || ''; }).join(',');
+  if (ids === renderState[stateKey]) { updateTimers(); return; }
+  renderState[stateKey] = ids;
+  container.innerHTML = '';
+  if (visible.length === 0) { container.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>'; return; }
+  const grid = document.createElement('div');
+  grid.className = 'dogs-grid';
+  const cols = visible.length===1?1:visible.length<=4?2:visible.length<=9?3:4;
+  grid.style.setProperty('--cols', cols);
+  visible.forEach(function(dog, i) {
+    const card = createDogCard(dog, tf, labelText, containerId, stateKey);
+    card.style.setProperty('--i', i);
+    card.classList.add('animate-in');
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+  updateTimers();
+}
+
+async function loadAll() {
+  const results = await Promise.all([fetchList('dogs'), fetchList('checkins')]);
+  const checkouts = filterRecent(results[0], 'checkOutTime');
+  const checkins = filterRecent(results[1], 'checkInTime');
+  const lco = checkouts[0] ? (checkouts[0].appointmentId || checkouts[0].name) : null;
+  const lci = checkins[0] ? (checkins[0].appointmentId || checkins[0].name) : null;
+  if (lco && lastCheckoutId !== null && lco !== lastCheckoutId) { playDing(); renderState.checkouts = ''; }
+  if (lci && lastCheckinId !== null && lci !== lastCheckinId) { playDing(); renderState.checkins = ''; }
+  lastCheckoutId = lco;
+  lastCheckinId = lci;
+  renderPanel('checkin-content', checkins, 'checkInTime', 'Checking In', 'checkins');
+  renderPanel('checkout-content', checkouts, 'checkOutTime', 'Checking Out', 'checkouts');
+}
+
+function playDing() {
+  try { document.getElementById('ding-sound').play().catch(function(){}); } catch(e) {}
+}
+
+function updateClock() {
+  const now = new Date();
+  const t = document.getElementById('dt-time');
+  const d = document.getElementById('dt-date');
+  if (t) t.textContent = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  if (d) d.textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+
+function demoList(endpoint) {
+  const now = Date.now();
+  const min = function(n){ return new Date(now - n*60000).toISOString(); };
+  const ph = function(id){ return 'https://placedog.net/640/640?id='+id; };
+  if (endpoint === 'checkins') return [
+    {appointmentId:'ci1',name:'Cheddar',imageUrl:ph(1),serviceName:'Boarding',serviceItemType:'BOARDING',checkInTime:min(1)},
+    {appointmentId:'ci2',name:'Biscuit',imageUrl:ph(2),serviceName:'Daycare',serviceItemType:'DAYCARE',checkInTime:min(3)},
+    {appointmentId:'ci3',name:'Mango',imageUrl:ph(3),serviceName:'TT: Phase 1',serviceItemType:'EVALUATION',checkInTime:min(5)},
+    {appointmentId:'ci4',name:'Pepper',imageUrl:ph(4),serviceName:'Daycare',serviceItemType:'DAYCARE',checkInTime:min(7)},
+    {appointmentId:'ci5',name:'Juno',imageUrl:ph(5),serviceName:'TT: Phase 2',serviceItemType:'EVALUATION',checkInTime:min(9)}
+  ];
+  if (endpoint === 'dogs') return [
+    {appointmentId:'co1',name:'Maverick',imageUrl:ph(6),serviceName:'Daycare',serviceItemType:'DAYCARE',checkOutTime:min(1)},
+    {appointmentId:'co2',name:'Luna',imageUrl:ph(7),serviceName:'Boarding',serviceItemType:'BOARDING',checkOutTime:min(4),lodgingLocation:'Big Pen'},
+    {appointmentId:'co3',name:'Scout',imageUrl:ph(8),serviceName:'TT: Phase 1',serviceItemType:'EVALUATION',checkOutTime:min(6)},
+    {appointmentId:'co4',name:'Olive',imageUrl:ph(9),serviceName:'TT: Phase 2',serviceItemType:'EVALUATION',checkOutTime:min(8),lodgingLocation:'Small Pen'}
+  ];
+  return [];
+}
+
+async function initDashboard() {
+  try {
+    if (DEMO_MODE) {
+      currentLocation = 'demo';
+      document.title = 'Down Dog Lodge Demo';
+    } else {
+      const res = await fetch(API_BASE_URL + '/locations');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const locs = data.locations || {};
+      const slugs = Object.keys(locs);
+      if (!slugs.length) throw new Error('No locations');
+      currentLocation = slugs[0];
+      document.title = (data.businessName || 'Down Dog Lodge') + ' Live Board';
     }
+    updateClock();
+    setInterval(updateClock, 1000);
+    await loadAll();
+    setInterval(loadAll, POLL_INTERVAL_MS);
+    setInterval(updateTimers, TIMER_INTERVAL_MS);
+    setInterval(syncDismissed, DISMISSED_POLL_MS);
+  } catch(err) {
+    console.error('init:', err);
+    document.getElementById('checkin-content').innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
+    document.getElementById('checkout-content').innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
+  }
+}
 
-    function filterRecent(dogs, tf) { return dogs.filter(function(d){ return d[tf]; }); }
+initDashboard();
+document.addEventListener('click', function(){ document.getElementById('ding-sound').load(); }, {once:true});
 
-    function pruneExpiredCards() {
-      const now = Date.now();
-      let removed = false;
-      document.querySelectorAll('#checkout-content .dog-card').forEach(function(card) {
-        const el = card.querySelector('.timer');
-        if (!el) return;
-        const ts = el.dataset.time;
-        if (ts && now - new Date(ts).getTime() >= EXPIRY_MS) { card.remove(); removed = true; }
-      });
-      if (removed) {
-        renderState.checkouts = '';
-        const c = document.getElementById('checkout-content');
-        const g = c && c.querySelector('.dogs-grid');
-        if (!g || g.children.length === 0) c.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
-      }
+(function(){
+  let vis = false, el = null;
+  document.addEventListener('keydown', function(e){
+    if (!e.ctrlKey || !e.shiftKey || e.key !== 'D') return;
+    e.preventDefault(); vis = !vis;
+    if (!vis) { if (el) el.style.display='none'; return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.style.cssText='position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,0.92);color:#0f0;font:11px monospace;padding:12px;border:1px solid #0f0;border-radius:6px;max-width:500px;max-height:80vh;overflow-y:auto;white-space:pre-wrap;';
+      document.body.appendChild(el);
     }
-
-    function updateTimers() {
-      const now = Date.now();
-      document.querySelectorAll('.timer[data-time]').forEach(function(timer) {
-        const ts = timer.getAttribute('data-time');
-        if (!ts) return;
-        const diffMin = Math.floor((now - new Date(ts).getTime()) / 60000);
-        if (diffMin <= 0) timer.textContent = 'Just now';
-        else if (diffMin === 1) timer.textContent = '1 min. ago';
-        else if (diffMin < 60) timer.textContent = diffMin + ' min. ago';
-        else { const h = Math.floor(diffMin/60), m = diffMin%60; timer.textContent = h+'h '+(m>0?m+'m ':' ')+'ago'; }
-      });
-      pruneExpiredCards();
+    const r = window._lastApiResponse || {};
+    let txt = '=== DEBUG ===\nloc: ' + currentLocation + '\n\n';
+    for (const [ep,d] of Object.entries(r)) {
+      txt += ep + ' (' + d.normalized.length + ' items) @ ' + d.ts + '\n';
+      if (d.normalized[0]) txt += 'keys: ' + Object.keys(d.normalized[0]).join(', ') + '\n';
+      txt += '\n';
     }
-
-    function dismissCard(card, containerId, stateKey) {
-      card.classList.add('card-dismissed');
-      const aptId = card.dataset.aptId;
-      if (aptId) clearedIds.add(aptId);
-      setTimeout(function() {
-        card.remove();
-        renderState[stateKey] = '';
-        const content = document.getElementById(containerId);
-        if (!content) return;
-        const grid = content.querySelector('.dogs-grid');
-        if (!grid || grid.children.length === 0) {
-          content.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
-        } else {
-          const n = grid.children.length;
-          grid.style.setProperty('--cols', n===1?1:n<=4?2:n<=9?3:4);
-        }
-      }, 420);
-    }
-
-    function createDogCard(dog, tf, labelText, containerId, stateKey) {
-      const card = document.createElement('article');
-      card.className = 'dog-card';
-      card.dataset.aptId = dog.appointmentId || dog.name || '';
-      if ((Date.now() - new Date(dog[tf]).getTime()) / 1000 <= HIGHLIGHT_WINDOW_S) card.classList.add('highlight');
-      const photoWrap = document.createElement('div');
-      photoWrap.className = 'dog-photo';
-      const img = document.createElement('img');
-      img.src = dog.imageUrl || 'placeholder.svg';
-      img.alt = dog.name || '';
-      img.decoding = 'async';
-      img.onerror = function(){ img.onerror=null; img.src='placeholder.svg'; };
-      photoWrap.appendChild(img);
-      const overlay = document.createElement('div');
-      overlay.className = 'dismiss-overlay';
-      const ck = document.createElement('span');
-      ck.className = 'dismiss-check';
-      ck.textContent = '✓';
-      overlay.appendChild(ck);
-      overlay.addEventListener('click', function(e){ e.stopPropagation(); dismissCard(card, containerId, stateKey); });
-      photoWrap.appendChild(overlay);
-      const info = document.createElement('div');
-      info.className = 'dog-info';
-      const lbl = document.createElement('span');
-      lbl.className = 'feature-label';
-      lbl.textContent = labelText;
-      info.appendChild(lbl);
-      const nm = document.createElement('div');
-      nm.className = 'dog-name';
-      nm.textContent = dog.name || '';
-      info.appendChild(nm);
-      const timer = document.createElement('div');
-      timer.className = 'timer';
-      timer.setAttribute('data-time', dog[tf]);
-      info.appendChild(timer);
-      const serviceRow = document.createElement('div');
-      serviceRow.className = 'dog-service-row';
-      const type = document.createElement('span');
-      type.className = 'service-type';
-      const svcLbl = document.createElement('span');
-      svcLbl.textContent = formatServiceType(dog.serviceItemType, dog.serviceName);
-      type.appendChild(svcLbl);
-      const loc = getLodgingLocation(dog);
-      if (loc) {
-        const locSpan = document.createElement('span');
-        locSpan.className = 'service-location';
-        locSpan.textContent = loc;
-        type.appendChild(locSpan);
-      }
-      serviceRow.appendChild(type);
-      info.appendChild(serviceRow);
-      card.appendChild(photoWrap);
-      card.appendChild(info);
-      return card;
-    }
-
-    function renderPanel(containerId, dogs, tf, labelText, stateKey) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const visible = dogs.filter(function(d){ return !clearedIds.has(d.appointmentId || d.name || ''); });
-      const ids = visible.map(function(d){ return d.appointmentId || d.name || ''; }).join(',');
-      if (ids === renderState[stateKey]) { updateTimers(); return; }
-      renderState[stateKey] = ids;
-      container.innerHTML = '';
-      if (visible.length === 0) { container.innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>'; return; }
-      const grid = document.createElement('div');
-      grid.className = 'dogs-grid';
-      const cols = visible.length===1?1:visible.length<=4?2:visible.length<=9?3:4;
-      grid.style.setProperty('--cols', cols);
-      visible.forEach(function(dog, i) {
-        const card = createDogCard(dog, tf, labelText, containerId, stateKey);
-        card.style.setProperty('--i', i);
-        card.classList.add('animate-in');
-        grid.appendChild(card);
-      });
-      container.appendChild(grid);
-      updateTimers();
-    }
-
-    async function loadAll() {
-      const results = await Promise.all([fetchList('dogs'), fetchList('checkins')]);
-      const checkouts = filterRecent(results[0], 'checkOutTime');
-      const checkins = filterRecent(results[1], 'checkInTime');
-      const lco = checkouts[0] ? (checkouts[0].appointmentId || checkouts[0].name) : null;
-      const lci = checkins[0] ? (checkins[0].appointmentId || checkins[0].name) : null;
-      if (lco && lastCheckoutId !== null && lco !== lastCheckoutId) { playDing(); renderState.checkouts = ''; }
-      if (lci && lastCheckinId !== null && lci !== lastCheckinId) { playDing(); renderState.checkins = ''; }
-      lastCheckoutId = lco; lastCheckinId = lci;
-      renderPanel('checkin-content', checkins, 'checkInTime', 'Checking In', 'checkins');
-      renderPanel('checkout-content', checkouts, 'checkOutTime', 'Checking Out', 'checkouts');
-    }
-
-    function playDing() { try { document.getElementById('ding-sound').play().catch(function(){}); } catch(e) {} }
-
-    function updateClock() {
-      const now = new Date();
-      const t = document.getElementById('dt-time');
-      const d = document.getElementById('dt-date');
-      if (t) t.textContent = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
-      if (d) d.textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    }
-
-    function demoList(endpoint) {
-      const now = Date.now();
-      const min = function(n){ return new Date(now - n*60000).toISOString(); };
-      const ph = function(id){ return 'https://placedog.net/640/640?id='+id; };
-      if (endpoint === 'checkins') return [
-        {appointmentId:'ci1',name:'Cheddar',imageUrl:ph(1),serviceName:'Boarding',serviceItemType:'BOARDING',checkInTime:min(1)},
-        {appointmentId:'ci2',name:'Biscuit',imageUrl:ph(2),serviceName:'Daycare',serviceItemType:'DAYCARE',checkInTime:min(3)},
-        {appointmentId:'ci3',name:'Mango',imageUrl:ph(3),serviceName:'TT: Phase 1',serviceItemType:'EVALUATION',checkInTime:min(5)},
-        {appointmentId:'ci4',name:'Pepper',imageUrl:ph(4),serviceName:'Daycare',serviceItemType:'DAYCARE',checkInTime:min(7)},
-        {appointmentId:'ci5',name:'Juno',imageUrl:ph(5),serviceName:'TT: Phase 2',serviceItemType:'EVALUATION',checkInTime:min(9)}
-      ];
-      if (endpoint === 'dogs') return [
-        {appointmentId:'co1',name:'Maverick',imageUrl:ph(6),serviceName:'Daycare',serviceItemType:'DAYCARE',checkOutTime:min(1)},
-        {appointmentId:'co2',name:'Luna',imageUrl:ph(7),serviceName:'Boarding',serviceItemType:'BOARDING',checkOutTime:min(4),lodgingLocation:'Big Pen'},
-        {appointmentId:'co3',name:'Scout',imageUrl:ph(8),serviceName:'TT: Phase 1',serviceItemType:'EVALUATION',checkOutTime:min(6)},
-        {appointmentId:'co4',name:'Olive',imageUrl:ph(9),serviceName:'TT: Phase 2',serviceItemType:'EVALUATION',checkOutTime:min(8),lodgingLocation:'Small Pen'}
-      ];
-      return [];
-    }
-
-    async function initDashboard() {
-      try {
-        if (DEMO_MODE) { currentLocation='demo'; document.title='Down Dog Lodge Demo'; }
-        else {
-          const res = await fetch(API_BASE_URL + '/locations');
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const data = await res.json();
-          const locs = data.locations || {};
-          const slugs = Object.keys(locs);
-          if (!slugs.length) throw new Error('No locations');
-          currentLocation = slugs[0];
-          document.title = (data.businessName || 'Down Dog Lodge') + ' Live Board';
-        }
-        updateClock();
-        setInterval(updateClock, 1000);
-        await loadAll();
-        setInterval(loadAll, POLL_INTERVAL_MS);
-        setInterval(updateTimers, TIMER_INTERVAL_MS);
-      } catch(err) {
-        console.error('init:', err);
-        document.getElementById('checkin-content').innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
-        document.getElementById('checkout-content').innerHTML = '<div class="empty-state"><span class="empty-check">&#10003;</span></div>';
-      }
-    }
-
-    initDashboard();
-    document.addEventListener('click', function(){ document.getElementById('ding-sound').load(); }, {once:true});
-
-    (function(){
-      let vis = false, el = null;
-      document.addEventListener('keydown', function(e){
-        if (!e.ctrlKey || !e.shiftKey || e.key !== 'D') return;
-        e.preventDefault(); vis = !vis;
-        if (!vis) { if (el) el.style.display='none'; return; }
-        if (!el) {
-          el = document.createElement('div');
-          el.style.cssText='position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,0.92);color:#0f0;font:11px monospace;padding:12px;border:1px solid #0f0;border-radius:6px;max-width:500px;max-height:80vh;overflow-y:auto;white-space:pre-wrap;';
-          document.body.appendChild(el);
-        }
-        const r = window._lastApiResponse || {};
-        let txt = '=== DEBUG ===\nloc: ' + currentLocation + '\n\n';
-        for (const [ep,d] of Object.entries(r)) {
-          txt += ep + ' (' + d.normalized.length + ' items) @ ' + d.ts + '\n';
-          if (d.normalized[0]) txt += 'keys: ' + Object.keys(d.normalized[0]).join(', ') + '\n';
-          txt += '\n';
-        }
-        el.textContent = txt; el.style.display = 'block';
-      });
-    })();
-  </script>
+    el.textContent = txt;
+    el.style.display = 'block';
+  });
+})();
+</script>
 </body>
 </html>
