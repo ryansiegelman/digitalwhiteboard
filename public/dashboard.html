@@ -60,7 +60,7 @@
     }
     .panel {
       display:flex; flex-direction:column;
-      flex-grow:var(--weight,1); flex-basis:0; min-width:0; overflow:hidden;
+    flex-grow:var(--weight,1); flex-basis:0; min-width:12rem; overflow:hidden;
       transition:flex-grow 0.6s cubic-bezier(0.22,1,0.36,1);
       border:2px solid var(--text); border-radius:var(--radius-lg);
       padding:0.9rem 1rem; background:rgba(255,255,255,0.01);
@@ -171,10 +171,10 @@
     function formatServiceType(serviceItemType, serviceName) {
       const raw = (serviceName || serviceItemType || '').trim();
       const sl = raw.toLowerCase().replace(/_/g,' ');
-      if (sl === 'daycare' || sl === 'day care') return 'Daycare';
-      if (sl === 'boarding' || sl === 'overnight' || sl === 'overnight boarding') return 'Boarding';
-      if (sl === 'tt: phase 1' || sl === 'tt phase 1' || sl === 'training phase 1' || sl === 'training: phase 1') return 'TT: Phase 1';
-      if (sl === 'tt: phase 2' || sl === 'tt phase 2' || sl === 'training phase 2' || sl === 'training: phase 2') return 'TT: Phase 2';
+    if (sl === 'daycare' || sl === 'day care' || sl === 'full daycare') return 'Daycare';
+    if (sl === 'boarding' || sl === 'overnight' || sl === 'overnight boarding') return 'Boarding';
+    if (sl === 'tt: phase 1' || sl === 'tt phase 1' || sl === 'training phase 1' || sl === 'training: phase 1') return 'TT: Phase 1';
+    if (sl === 'tt: phase 2' || sl === 'tt phase 2' || sl === 'training phase 2' || sl === 'training: phase 2') return 'TT: Phase 2';
       if (raw) return raw.replace(/w/g, function(c){ return c.toUpperCase(); });
       return 'Reservation';
     }
@@ -337,13 +337,13 @@
       lastCheckoutId = latestCheckout;
       lastCheckinId  = latestCheckin;
 
-      const ci = checkins.length, co = checkouts.length;
-      let wCi, wCo;
-      if (ci === 0 && co === 0) { wCi = 1; wCo = 1; }
-      else if (ci === 0)        { wCi = 0.15; wCo = Math.max(1, co); }
-      else if (co === 0)        { wCi = Math.max(1, ci); wCo = 0.15; }
-      else                      { wCi = Math.max(1, ci); wCo = Math.max(1, co); }
-      document.getElementById('panel-checkin').style.setProperty('--weight', wCi);
+    const ci = checkins.length, co = checkouts.length;
+    let wCi, wCo;
+    const SLIDE_THRESHOLD = 3;
+    if (ci === 0 && co === 0) { wCi = 1; wCo = 1; }
+    else if (ci === 0)        { wCi = co >= SLIDE_THRESHOLD ? 0.15 : 1; wCo = co >= SLIDE_THRESHOLD ? Math.max(1, co) : 1; }
+    else if (co === 0)        { wCi = ci >= SLIDE_THRESHOLD ? Math.max(1, ci) : 1; wCo = ci >= SLIDE_THRESHOLD ? 0.15 : 1; }
+    else                      { wCi = Math.max(1, ci); wCo = Math.max(1, co); }      document.getElementById('panel-checkin').style.setProperty('--weight', wCi);
       document.getElementById('panel-checkout').style.setProperty('--weight', wCo);
 
       renderPanel('checkin-content',  checkins,  'checkInTime',  'Checking In',  'checkins');
