@@ -379,13 +379,13 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     const baseBody = {
       companyId: config.COMPANY_ID,
       businessIds: [businessId],
-      filter: { checkInTime: { startTime: start, endTime: end }, statuses: ['IN_PROGRESS'] }
+      filter: { statuses: ['IN_PROGRESS'] }
     };
     const appointments = await fetchAllAppointmentPages(baseBody);
     let dogs = [];
     for (const appointment of appointments) {
       const checkInTime = appointment.checkInTime;
-      if (!checkInTime) continue;
+      if (!checkInTime) checkInTime = new Date().toISOString();
       const ownerLastName = await fetchClientLastName(appointment.customerId);
       for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
