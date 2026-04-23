@@ -55,12 +55,9 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
 .dismiss-overlay { position:absolute; inset:0; border-radius:calc(var(--radius-lg) - 4px); background:rgba(255,255,255,0); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s ease, background 0.2s ease; cursor:pointer; z-index:10; }
 .dog-card:hover .dismiss-overlay { opacity:1; background:rgba(255,255,255,0.60); }
 .dismiss-check { font-size:5.5rem; color:#ffffff; font-weight:900; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.25); }
-/* Exit animation - more expressive */
-@keyframes card-exit {
-  0%   { opacity:1; }
-  100% { opacity:0; }
-}
-.card-dismissed { animation:card-exit 2s ease-in forwards; pointer-events:none; }
+/* Exit animation - smooth dissolve */
+.dog-card { transition:opacity 1.5s ease; }
+.card-dismissed { opacity:0 !important; pointer-events:none; }
 .dogs-grid { flex:1; display:grid; grid-template-columns:repeat(var(--cols,1),1fr); grid-auto-rows:1fr; gap:0.75rem; min-height:0; align-content:stretch; }
 .panel-checkout .dog-card.highlight { border-color:var(--accent); animation:glow-co 2.5s ease-in-out infinite; }
 .panel-checkin .dog-card.highlight { border-color:var(--checkin-color); animation:glow-ci 2.5s ease-in-out infinite; }
