@@ -419,6 +419,24 @@ if (mode === 'hybrid' || mode === 'webhook') {
   setInterval(cleanupStaleEntries, config.CLEANUP_INTERVAL_MS);
 }
 
+// Debug: read stored checkin/dog JSON files and show all service fields
+app.get('/debug-files', (req, res) => {
+  const results = {};
+  const files = ['checkins.json', 'dogs.json'];
+  for (const loc of Object.keys(LOCATIONS)) {
+    files.push('checkins-' + loc + '.json');
+    files.push('dogs-' + loc + '.json');
+  }
+  files.forEach(f => {
+    const fp = path.join(__dirname, f);
+    try {
+      const data = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+      results[f] = data.map(d => ({ name: d.name, serviceItemType: d.serviceItemType, serviceName: d.serviceName, lodgingLocation: d.lodgingLocation }));
+    } catch(e) { results[f] = 'error: ' + e.message; }
+  });
+  res.json(results);
+});
+
 // Debug: dump raw MoeGo API response for checked-in appointments
 app.get('/debug-raw', async (req, res) => {
   try {
