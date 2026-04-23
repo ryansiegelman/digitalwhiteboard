@@ -1,14 +1,16 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
-const cors = require('cors');
-const crypto = require('crypto');
-const app = express();
-const config = require('./config');
+const express = require('express'); const fs = require('fs'); const path = require('path'); const axios = require('axios'); const cors = require('cors'); const crypto = require('crypto'); const app = express(); const config = require('./config');
 
 // Cache to avoid repeated client lookups
 const clientCache = new Map();
+
+// In-memory dismissed IDs store for cross-screen sync
+// Map of location -> Set of dismissed appointmentIds
+const dismissedStore = new Map();
+// Cleanup dismissed IDs older than 12 hours
+function getDismissedSet(location) {
+  if (!dismissedStore.has(location)) dismissedStore.set(location, new Set());
+  return dismissedStore.get(location);
+}
 
 // Enable CORS
 function buildCorsOrigins(raw) {
@@ -19,10 +21,28 @@ function buildCorsOrigins(raw) {
 const corsOrigins = buildCorsOrigins(config.CORS_ORIGINS);
 app.use(cors({ origin: corsOrigins, credentials: corsOrigins !== '*' }));
 app.use('/webhook', express.json({ verify: (req, _res, buf) => { req.rawBody = buf.toString('utf-8'); } }));
+app.use(express.json());
 app.use(express.static('public'));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime(), webhookMode: config.WEBHOOK_MODE });
+});
+
+// Dismissed IDs endpoints for cross-screen sync
+app.get('/dismissed', (req, res) => {
+  const location = req.query.location || 'default';
+  const ids = Array.from(getDismissedSet(location));
+  res.json({ dismissed: ids });
+});
+
+app.post('/dismissed', (req, res) => {
+  const location = req.query.location || req.body.location || 'default';
+  const id = req.body.id || req.body.appointmentId || '';
+  if (id) {
+    getDismissedSet(location).add(String(id));
+    console.log('Dismissed: ' + id + ' for location: ' + location);
+  }
+  res.json({ ok: true, dismissed: Array.from(getDismissedSet(location)) });
 });
 
 const LOCATIONS = {};
@@ -37,14 +57,50 @@ for (const [key, loc] of Object.entries(LOCATIONS)) {
 function extractServiceName(detail) {
   const sd = (detail && detail.serviceDetails && detail.serviceDetails[0]) || {};
   const candidates = [
-    sd.serviceName, sd.name, sd.service && sd.service.name, sd.service && sd.service.serviceName,
-    sd.displayName, detail && detail.service && detail.service.name, detail && detail.service && detail.service.serviceName,
-    detail && detail.serviceName, detail && detail.name,
+    sd.serviceName, sd.name,
+    sd.service && sd.service.name,
+    sd.service && sd.service.serviceName,
+    sd.displayName,
+    detail && detail.service && detail.service.name,
+    detail && detail.service && detail.service.serviceName,
+    detail && detail.serviceName,
+    detail && detail.name,
   ];
   for (const c of candidates) {
     if (!c) continue;
     const s = String(c).trim();
     if (s) return s;
+  }
+  return '';
+}
+
+function extractLodgingLocation(detail) {
+  // Try to get the pen/kennel/resource assignment from service details
+  const sd = (detail && detail.serviceDetails && detail.serviceDetails[0]) || {};
+  const candidates = [
+    detail && detail.lodgingLocation,
+    detail && detail.pen,
+    detail && detail.kennel,
+    detail && detail.resourceName,
+    detail && detail.resource,
+    detail && detail.roomName,
+    detail && detail.room,
+    sd.lodgingLocation,
+    sd.pen,
+    sd.kennel,
+    sd.resourceName,
+    sd.resource,
+    sd.roomName,
+    sd.room,
+    sd.facilityName,
+    detail && detail.facilityName,
+    // Some MoeGo APIs use these
+    detail && detail.pet && detail.pet.kennel,
+    detail && detail.pet && detail.pet.pen,
+    detail && detail.pet && detail.pet.resourceName,
+  ];
+  for (const c of candidates) {
+    if (c && typeof c === 'string' && c.trim()) return c.trim();
   }
   return '';
 }
@@ -57,11 +113,7 @@ async function fetchClientLastName(customerId) {
       method: 'post',
       url: 'https://openapi.moego.pet/v1/clients:list',
       headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({
-        companyId: config.COMPANY_ID,
-        pagination: { pageSize: 1, pageToken: '1' },
-        filter: { ids: [customerId] }
-      })
+      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
     const clients = (r.data && r.data.clients) || [];
     const client = clients[0] || {};
@@ -118,7 +170,7 @@ app.get('/checkins', (req, res) => {
     : path.join(__dirname, 'checkins-' + location + '.json');
   if (fs.existsSync(filePath)) {
     const all = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-   const cutoff = Date.now() - 10 * 60 * 1000;
+    const cutoff = Date.now() - 10 * 60 * 1000;
     const recent = all.filter(function(d) {
       const t = d.checkInTime || d.check_in_time;
       return t && new Date(t).getTime() >= cutoff;
@@ -135,71 +187,33 @@ app.get('/locations', (req, res) => {
 
 app.get('/debug-moego', async (req, res) => {
   try {
-    const r = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/companies:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({ pagination: { pageSize: 10, pageToken: '1' } })
-    });
+    const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/companies:list', headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' }, data: JSON.stringify({ pagination: { pageSize: 10, pageToken: '1' } }) });
     res.json({ companies: r.data });
-  } catch (err) {
-    res.json({ error: (err.response && err.response.data) || err.message });
-  }
+  } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
 });
 
 app.get('/debug-businesses', async (req, res) => {
   const companyId = req.query.companyId;
   try {
-    const r = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/businesses:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({ pagination: { pageSize: 10, pageToken: '1' }, companyId: companyId })
-    });
+    const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/businesses:list', headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' }, data: JSON.stringify({ pagination: { pageSize: 10, pageToken: '1' }, companyId: companyId }) });
     res.json({ businesses: r.data });
-  } catch (err) {
-    res.json({ error: (err.response && err.response.data) || err.message });
-  }
+  } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
 });
 
 app.get('/debug-appts', async (req, res) => {
-  const companyId = req.query.companyId;
-  const businessId = req.query.businessId;
+  const companyId = req.query.companyId; const businessId = req.query.businessId;
   try {
-    const r = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/appointments:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({
-        pagination: { pageSize: 5, pageToken: '1' },
-        companyId: companyId, businessIds: [businessId],
-        filter: { statuses: ['FINISHED'] }
-      })
-    });
+    const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:list', headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' }, data: JSON.stringify({ pagination: { pageSize: 5, pageToken: '1' }, companyId: companyId, businessIds: [businessId], filter: { statuses: ['FINISHED'] } }) });
     res.json(r.data);
-  } catch (err) {
-    res.json({ error: (err.response && err.response.data) || err.message });
-  }
+  } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
 });
 
 app.get('/debug-checkins', async (req, res) => {
-  const companyId = req.query.companyId;
-  const businessId = req.query.businessId;
+  const companyId = req.query.companyId; const businessId = req.query.businessId;
   try {
-    const r = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/appointments:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify({
-        pagination: { pageSize: 5, pageToken: '1' },
-        companyId: companyId, businessIds: [businessId],
-          filter: { statuses: [req.query.status || 'CHECKED_IN'] }
-      })
-    });
+    const r = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:list', headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' }, data: JSON.stringify({ pagination: { pageSize: 5, pageToken: '1' }, companyId: companyId, businessIds: [businessId], filter: { statuses: [req.query.status || 'CHECKED_IN'] } }) });
     res.json(r.data);
-  } catch (err) {
-    res.json({ error: (err.response && err.response.data) || err.message });
-  }
+  } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
 });
 
 function verifyWebhookSignature(req) {
@@ -211,9 +225,7 @@ function verifyWebhookSignature(req) {
   if (!signature || !req.rawBody) return false;
   const raw = clientId + nonce + timestamp + req.rawBody;
   const expected = crypto.createHmac('sha256', config.WEBHOOK_SECRET).update(raw).digest('base64');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch (e) { return false; }
+  try { return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected)); } catch (e) { return false; }
 }
 
 function mergeDogsIntoFile(fileName, newDogs, timeField) {
@@ -249,7 +261,8 @@ async function updateDogsFromWebhook(appointment) {
       appointmentId: appointment.id,
       customerId: appointment.customerId,
       serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
-      serviceName: extractServiceName(detail)
+      serviceName: extractServiceName(detail),
+      lodgingLocation: extractLodgingLocation(detail)
     };
   });
   if (newDogs.length === 0) return;
@@ -273,7 +286,8 @@ async function updateCheckinsFromWebhook(appointment) {
       checkInTime: checkInTime,
       appointmentId: appointment.id,
       serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
-      serviceName: extractServiceName(detail)
+      serviceName: extractServiceName(detail),
+      lodgingLocation: extractLodgingLocation(detail)
     };
   });
   if (newDogs.length === 0) return;
@@ -283,31 +297,19 @@ async function updateCheckinsFromWebhook(appointment) {
 }
 
 app.post('/webhook', async (req, res) => {
-  if (!verifyWebhookSignature(req)) {
-    console.log(' Webhook: invalid signature');
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
+  if (!verifyWebhookSignature(req)) { console.log(' Webhook: invalid signature'); return res.status(401).json({ error: 'Invalid signature' }); }
   const body = req.body;
   const eventType = body.type || body.eventType;
-  if (eventType === 'HEALTH_CHECK') {
-    console.log(' Webhook: HEALTH_CHECK received');
-    return res.status(200).json({ status: 'ok' });
-  }
+  if (eventType === 'HEALTH_CHECK') { console.log(' Webhook: HEALTH_CHECK received'); return res.status(200).json({ status: 'ok' }); }
   let appointment = body.appointment;
-  try {
-    if (typeof appointment === 'string') appointment = JSON.parse(Buffer.from(appointment, 'base64').toString('utf-8'));
-  } catch (err) {
-    console.error(' Webhook: failed to decode appointment:', err.message);
-    return res.status(200).json({ status: 'decode-error' });
-  }
+  try { if (typeof appointment === 'string') appointment = JSON.parse(Buffer.from(appointment, 'base64').toString('utf-8')); }
+  catch (err) { console.error(' Webhook: failed to decode appointment:', err.message); return res.status(200).json({ status: 'decode-error' }); }
   if (eventType === 'APPOINTMENT_FINISHED') {
-    try { if (appointment) await updateDogsFromWebhook(appointment); }
-    catch (err) { console.error(' Webhook: failed to process finish:', err.message); }
+    try { if (appointment) await updateDogsFromWebhook(appointment); } catch (err) { console.error(' Webhook: failed to process finish:', err.message); }
     return res.status(200).json({ status: 'processed' });
   }
   if (eventType === 'APPOINTMENT_CHECKED_IN' || eventType === 'APPOINTMENT_STARTED' || eventType === 'APPOINTMENT_IN_PROGRESS') {
-    try { if (appointment) await updateCheckinsFromWebhook(appointment); }
-    catch (err) { console.error(' Webhook: failed to process check-in:', err.message); }
+    try { if (appointment) await updateCheckinsFromWebhook(appointment); } catch (err) { console.error(' Webhook: failed to process check-in:', err.message); }
     return res.status(200).json({ status: 'processed' });
   }
   res.status(200).json({ status: 'ignored' });
@@ -315,26 +317,15 @@ app.post('/webhook', async (req, res) => {
 
 // Fetch all pages from MoeGo appointments API
 async function fetchAllAppointmentPages(baseBody) {
-  let allAppointments = [];
-  let pageToken = '1';
-  let hasMore = true;
+  let allAppointments = []; let pageToken = '1'; let hasMore = true;
   while (hasMore) {
     const body = Object.assign({}, baseBody, { pagination: { pageSize: 100, pageToken: pageToken } });
-    const response = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/appointments:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
-      data: JSON.stringify(body)
-    });
+    const response = await axios.request({ method: 'post', url: 'https://openapi.moego.pet/v1/appointments:list', headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' }, data: JSON.stringify(body) });
     const data = response.data;
     const appointments = data.appointments || [];
     allAppointments = allAppointments.concat(appointments);
     const next = (data.pagination && data.pagination.nextPageToken) || data.nextPageToken || null;
-    if (next && next !== pageToken && appointments.length > 0) {
-      pageToken = next;
-    } else {
-      hasMore = false;
-    }
+    if (next && next !== pageToken && appointments.length > 0) { pageToken = next; } else { hasMore = false; }
   }
   return allAppointments;
 }
@@ -344,11 +335,7 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
     const now = new Date();
     const start = new Date(now.getTime() - config.DOG_CHECKED_BEFORE * 60 * 60 * 1000).toISOString();
     const end = now.toISOString();
-    const baseBody = {
-      companyId: config.COMPANY_ID,
-      businessIds: [businessId],
-      filter: { checkOutTime: { startTime: start, endTime: end }, statuses: ['FINISHED'] }
-    };
+    const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { checkOutTime: { startTime: start, endTime: end }, statuses: ['FINISHED'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
     let dogs = [];
     for (const appointment of appointments) {
@@ -364,16 +351,15 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
           appointmentId: appointment.id,
           customerId: appointment.customerId,
           serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
-          serviceName: extractServiceName(detail)
+          serviceName: extractServiceName(detail),
+          lodgingLocation: extractLodgingLocation(detail)
         });
       }
     }
     dogs.sort(function(a, b) { return new Date(b.checkOutTime) - new Date(a.checkOutTime); });
     fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
     console.log(' Updated ' + fileName + ' with ' + dogs.length + ' entries.');
-  } catch (err) {
-    console.error(' Failed to fetch appointments for ' + fileName + ':', (err.response && err.response.data) || err.message);
-  }
+  } catch (err) { console.error(' Failed to fetch appointments for ' + fileName + ':', (err.response && err.response.data) || err.message); }
 }
 
 async function fetchCheckinsForLocation(businessId, fileName) {
@@ -382,15 +368,11 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     const windowHours = Math.min(config.DOG_CHECKED_BEFORE || 6, 6);
     const start = new Date(now.getTime() - windowHours * 60 * 60 * 1000).toISOString();
     const end = now.toISOString();
-    const baseBody = {
-      companyId: config.COMPANY_ID,
-      businessIds: [businessId],
-      filter: { statuses: ['CHECKED_IN'] }
-    };
+    const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { statuses: ['CHECKED_IN'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
     let dogs = [];
     for (const appointment of appointments) {
-      const checkInTime = appointment.checkInTime;
+      let checkInTime = appointment.checkInTime;
       if (!checkInTime) checkInTime = new Date().toISOString();
       const ownerLastName = await fetchClientLastName(appointment.customerId);
       for (const detail of (appointment.petServiceDetails || [])) {
@@ -402,16 +384,15 @@ async function fetchCheckinsForLocation(businessId, fileName) {
           checkInTime: checkInTime,
           appointmentId: appointment.id,
           serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
-          serviceName: extractServiceName(detail)
+          serviceName: extractServiceName(detail),
+          lodgingLocation: extractLodgingLocation(detail)
         });
       }
     }
     dogs.sort(function(a, b) { return new Date(b.checkInTime) - new Date(a.checkInTime); });
     fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
     console.log(' Updated ' + fileName + ' with ' + dogs.length + ' entries.');
-  } catch (err) {
-    console.error(' Failed to fetch check-ins for ' + fileName + ':', (err.response && err.response.data) || err.message);
-  }
+  } catch (err) { console.error(' Failed to fetch check-ins for ' + fileName + ':', (err.response && err.response.data) || err.message); }
 }
 
 async function fetchAllLocations() {
@@ -438,9 +419,7 @@ function cleanupStaleEntries() {
     try {
       const dogs = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       const filtered = dogs.filter(function(d) { return new Date(d[f.timeField]) > cutoff; });
-      if (filtered.length !== dogs.length) {
-        fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2));
-      }
+      if (filtered.length !== dogs.length) { fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2)); }
     } catch (e) {}
   }
 }
@@ -464,5 +443,6 @@ app.listen(config.PORT, function() {
   console.log(' Health check: http://localhost:' + config.PORT + '/health');
   console.log(' Dogs endpoint: http://localhost:' + config.PORT + '/dogs');
   console.log(' Check-ins endpoint: http://localhost:' + config.PORT + '/checkins');
+  console.log(' Dismissed endpoint: http://localhost:' + config.PORT + '/dismissed');
   if (mode !== 'poll') console.log(' Webhook endpoint: http://localhost:' + config.PORT + '/webhook');
 });
