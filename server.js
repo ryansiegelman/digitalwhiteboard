@@ -117,7 +117,13 @@ app.get('/checkins', (req, res) => {
     ? path.join(__dirname, 'checkins.json')
     : path.join(__dirname, 'checkins-' + location + '.json');
   if (fs.existsSync(filePath)) {
-    res.json(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
+    const all = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const recent = all.filter(function(d) {
+      const t = d.checkInTime || d.check_in_time;
+      return t && new Date(t).getTime() >= cutoff;
+    });
+    res.json(recent);
   } else {
     res.json([]);
   }
