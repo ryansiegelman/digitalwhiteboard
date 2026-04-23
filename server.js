@@ -419,7 +419,7 @@ if (mode === 'hybrid' || mode === 'webhook') {
   setInterval(cleanupStaleEntries, config.CLEANUP_INTERVAL_MS);
 }
 
-// Debug: dump raw MoeGo API response for checked-in appointments (first 2)
+// Debug: dump raw MoeGo API response for checked-in appointments
 app.get('/debug-raw', async (req, res) => {
   try {
     const r = await axios.request({
@@ -429,11 +429,26 @@ app.get('/debug-raw', async (req, res) => {
       data: JSON.stringify({
         companyId: config.COMPANY_ID,
         businessIds: [config.BUSINESS_ID],
-        pagination: { pageSize: 2, pageToken: '1' },
+        pagination: { pageSize: 50, pageToken: '1' },
         filter: { statuses: ['CHECKED_IN'] }
       })
     });
-    res.json(r.data);
+    // Return a summary focusing on lodging fields
+    const summary = (r.data.appointments || []).map(appt => ({
+      id: appt.id,
+      pets: (appt.petServiceDetails || []).map(d => ({
+        pet: d.pet && d.pet.name,
+        serviceDetails: (d.serviceDetails || []).map(sd => ({
+          name: sd.name,
+          serviceItemType: sd.serviceItemType,
+          lodgingId: sd.lodgingId,
+          lodgingUnitName: sd.lodgingUnitName,
+          lodgingTypeName: sd.lodgingTypeName,
+          serviceType: sd.serviceType,
+        }))
+      }))
+    }));
+    res.json({ total: summary.length, appointments: summary });
   } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
 });
 
