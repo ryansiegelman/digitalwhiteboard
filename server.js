@@ -438,6 +438,24 @@ if (mode === 'hybrid' || mode === 'webhook') {
   setInterval(cleanupStaleEntries, config.CLEANUP_INTERVAL_MS);
 }
 
+// Debug: dump raw MoeGo API response for checked-in appointments (first 2)
+app.get('/debug-raw', async (req, res) => {
+  try {
+    const r = await axios.request({
+      method: 'post',
+      url: 'https://openapi.moego.pet/v1/appointments:list',
+      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({
+        companyId: config.COMPANY_ID,
+        businessIds: [config.BUSINESS_ID],
+        pagination: { pageSize: 2, pageToken: '1' },
+        filter: { statuses: ['CHECKED_IN'] }
+      })
+    });
+    res.json(r.data);
+  } catch (err) { res.json({ error: (err.response && err.response.data) || err.message }); }
+});
+
 app.listen(config.PORT, function() {
   console.log(' Server running at http://localhost:' + config.PORT + ' [mode: ' + mode + ']');
   console.log(' Health check: http://localhost:' + config.PORT + '/health');
