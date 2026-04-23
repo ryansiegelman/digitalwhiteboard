@@ -127,7 +127,7 @@ function formatServiceType(sit, sn) {
   if (s2.includes('phase 1') || s2.includes('tt1')) return 'TT: Phase 1';
   if (s2.includes('phase 2') || s2.includes('tt2')) return 'TT: Phase 2';
   if (raw) return raw.replace(/\w/g, function(c){ return c.toUpperCase(); });
-  return 'Reservation';
+  return '';
 }
 
 function getLodgingLocation(dog) {
@@ -300,7 +300,7 @@ function createDogCard(dog, tf, labelText, containerId, stateKey) {
     type.appendChild(locSpan);
   }
   serviceRow.appendChild(type);
-  info.appendChild(serviceRow);
+  if (svcLbl.textContent) info.appendChild(serviceRow);
   card.appendChild(photoWrap);
   card.appendChild(info);
   return card;
