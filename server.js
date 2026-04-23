@@ -55,18 +55,31 @@ for (const [key, loc] of Object.entries(LOCATIONS)) {
 }
 
 function extractServiceName(detail) {
-  const sd = (detail && detail.serviceDetails && detail.serviceDetails[0]) || {};
-  const candidates = [
-    sd.serviceName, sd.name,
-    sd.service && sd.service.name,
-    sd.service && sd.service.serviceName,
-    sd.displayName,
+  // Try every serviceDetails item (not just index 0) for a populated name
+  for (const sd of (detail && detail.serviceDetails || [])) {
+    const candidates = [
+      sd.serviceName, sd.name,
+      sd.service && sd.service.name,
+      sd.service && sd.service.serviceName,
+      sd.displayName,
+    ];
+    for (const c of candidates) {
+      if (!c) continue;
+      const s = String(c).trim();
+      if (s) return s;
+    }
+  }
+  // Fallback to detail-level fields
+  const detailCandidates = [
     detail && detail.service && detail.service.name,
     detail && detail.service && detail.service.serviceName,
     detail && detail.serviceName,
     detail && detail.name,
+    detail && detail.displayName,
+    detail && detail.serviceType,
+    detail && detail.type,
   ];
-  for (const c of candidates) {
+  for (const c of detailCandidates) {
     if (!c) continue;
     const s = String(c).trim();
     if (s) return s;
@@ -241,7 +254,7 @@ async function updateDogsFromWebhook(appointment) {
       checkOutTime: checkOutTime,
       appointmentId: appointment.id,
       customerId: appointment.customerId,
-      serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
+      serviceItemType: (function(sds){ for(var i=0;i<(sds||[]).length;i++){ var t=(sds[i].serviceItemType||'').trim(); if(t) return t; } return ''; })(detail.serviceDetails),
       serviceName: extractServiceName(detail),
       lodgingLocation: extractLodgingLocation(detail)
     };
@@ -266,7 +279,7 @@ async function updateCheckinsFromWebhook(appointment) {
       ownerLastName: ownerLastName,
       checkInTime: checkInTime,
       appointmentId: appointment.id,
-      serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
+      serviceItemType: (function(sds){ for(var i=0;i<(sds||[]).length;i++){ var t=(sds[i].serviceItemType||'').trim(); if(t) return t; } return ''; })(detail.serviceDetails),
       serviceName: extractServiceName(detail),
       lodgingLocation: extractLodgingLocation(detail)
     };
