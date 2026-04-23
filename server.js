@@ -75,32 +75,13 @@ function extractServiceName(detail) {
 }
 
 function extractLodgingLocation(detail) {
-  // Try to get the pen/kennel/resource assignment from service details
-  const sd = (detail && detail.serviceDetails && detail.serviceDetails[0]) || {};
-  const candidates = [
-    detail && detail.lodgingLocation,
-    detail && detail.pen,
-    detail && detail.kennel,
-    detail && detail.resourceName,
-    detail && detail.resource,
-    detail && detail.roomName,
-    detail && detail.room,
-    sd.lodgingLocation,
-    sd.pen,
-    sd.kennel,
-    sd.resourceName,
-    sd.resource,
-    sd.roomName,
-    sd.room,
-    sd.facilityName,
-    detail && detail.facilityName,
-    // Some MoeGo APIs use these
-    detail && detail.pet && detail.pet.kennel,
-    detail && detail.pet && detail.pet.pen,
-    detail && detail.pet && detail.pet.resourceName,
-  ];
-  for (const c of candidates) {
-    if (c && typeof c === 'string' && c.trim()) return c.trim();
+  // MoeGo API uses lodgingUnitName and lodgingTypeName inside serviceDetails items
+  // Only boarding/lodging appointments have these populated
+  for (const sd of (detail && detail.serviceDetails || [])) {
+    const unit = (sd.lodgingUnitName || '').trim();
+    const type = (sd.lodgingTypeName || '').trim();
+    if (unit) return unit;   // e.g. "Big Pen", "Small Pen", "Suite 1"
+    if (type) return type;   // fallback to type name
   }
   return '';
 }
