@@ -99,6 +99,30 @@ function extractLodgingLocation(detail) {
   return '';
 }
 
+// Fill in missing service/lodging info from the location's check-ins file.
+// Useful when a checkout comes through with empty serviceDetails but the
+// dog's check-in had full data (match by appointmentId, then customerId+name, then name).
+function enrichFromCheckins(dogs, locationKey) {
+  if (!dogs || dogs.length === 0) return dogs;
+  let checkins = [];
+  try {
+    const fp = path.join(__dirname, 'checkins-' + locationKey + '.json');
+    checkins = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+  } catch (e) { return dogs; }
+  return dogs.map(function(d) {
+    if (d.lodgingLocation && d.serviceName && d.serviceItemType) return d;
+    var match = checkins.find(function(c){ return c.appointmentId && c.appointmentId === d.appointmentId; })
+             || (d.customerId && checkins.find(function(c){ return c.customerId && c.customerId === d.customerId && c.name === d.name; }))
+             || checkins.find(function(c){ return c.name === d.name && (c.lodgingLocation || c.serviceName); });
+    if (match) {
+      if (!d.lodgingLocation && match.lodgingLocation) d.lodgingLocation = match.lodgingLocation;
+      if (!d.serviceName && match.serviceName) d.serviceName = match.serviceName;
+      if (!d.serviceItemType && match.serviceItemType) d.serviceItemType = match.serviceItemType;
+    }
+    return d;
+  });
+}
+
 async function fetchClientLastName(customerId) {
   if (!customerId) return '';
   if (clientCache.has(customerId)) return clientCache.get(customerId);
@@ -260,8 +284,9 @@ async function updateDogsFromWebhook(appointment) {
     };
   });
   if (newDogs.length === 0) return;
-  mergeDogsIntoFile('dogs-' + locationKey + '.json', newDogs, 'checkOutTime');
-  if (businessId === config.BUSINESS_ID) mergeDogsIntoFile('dogs.json', newDogs, 'checkOutTime');
+  const enriched = enrichFromCheckins(newDogs, locationKey);
+  mergeDogsIntoFile('dogs-' + locationKey + '.json', enriched, 'checkOutTime');
+  if (businessId === config.BUSINESS_ID) mergeDogsIntoFile('dogs.json', enriched, 'checkOutTime');
   console.log('Dog Webhook: added ' + newDogs.length + ' checkout(s)');
 }
 
@@ -351,7 +376,9 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
       }
     }
     dogs.sort(function(a, b) { return new Date(b.checkOutTime) - new Date(a.checkOutTime); });
-    fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(dogs, null, 2));
+    const locationKey = BUSINESS_ID_TO_LOCATION[businessId];
+    const enrichedDogs = locationKey ? enrichFromCheckins(dogs, locationKey) : dogs;
+    fs.writeFileSync(path.join(__dirname, fileName), JSON.stringify(enrichedDogs, null, 2));
     console.log(' Updated ' + fileName + ' with ' + dogs.length + ' entries.');
   } catch (err) { console.error(' Failed to fetch appointments for ' + fileName + ':', (err.response && err.response.data) || err.message); }
 }
