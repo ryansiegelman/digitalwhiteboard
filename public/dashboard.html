@@ -80,6 +80,13 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
 .queue-results li:hover { background:var(--border); }
 .queue-results li.empty { color:var(--text-muted); cursor:default; }
 .queue-results li.empty:hover { background:transparent; }
+.panel { position:relative; }
+.queue-search { position:absolute; top:3.5rem; left:1rem; right:1rem; margin:0; z-index:50; }
+.queue-results { background:var(--bg); }
+.queue-name { font-weight:700; color:var(--text); }
+.queue-breed { font-weight:400; color:var(--text); }
+#queue-preview { position:fixed; display:none; pointer-events:none; width:200px; height:200px; border-radius:12px; overflow:hidden; z-index:9999; box-shadow:0 12px 40px rgba(0,0,0,0.5); border:2px solid var(--border-light); background:var(--surface-raised); }
+#queue-preview img { width:100%; height:100%; object-fit:cover; display:block; }
 </style>
 </head>
 <body>
@@ -112,6 +119,7 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
     </div>
   </section>
 </main>
+<div id="queue-preview"></div>
 <audio id="ding-sound" preload="auto"><source src="ding.mp3" type="audio/mpeg"></audio>
 <script>
 const API_BASE_URL = window.location.origin;
@@ -415,17 +423,59 @@ function setupQueueUI() {
     const matches = inHouseCache.filter(function(d){ return (d.name || '').toLowerCase().includes(q); }).sort(function(a, b){ return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()); }).slice(0, 8);
     if (matches.length === 0) { results.innerHTML = '<li class="empty">No matches</li>'; return; }
     results.innerHTML = '';
+    const preview = document.getElementById('queue-preview');
     matches.forEach(function(d) {
       const li = document.createElement('li');
-      const fullName = d.name + (d.ownerLastName ? ' ' + d.ownerLastName : '');
-      li.textContent = fullName + (d.breed ? ', ' + d.breed : '');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'queue-name';
+      nameSpan.textContent = d.name + (d.ownerLastName ? ' ' + d.ownerLastName : '');
+      li.appendChild(nameSpan);
+      if (d.breed) {
+        const bs = document.createElement('span');
+        bs.className = 'queue-breed';
+        bs.textContent = ', ' + d.breed;
+        li.appendChild(bs);
+      }
+      li.addEventListener('mouseenter', function() {
+        if (!preview) return;
+        preview.innerHTML = '<img src="' + (d.imageUrl || 'placeholder.svg') + '" onerror="this.src=\'placeholder.svg\'">';
+        preview.style.display = 'block';
+      });
+      li.addEventListener('mouseleave', function() { if (preview) preview.style.display = 'none'; });
+      li.addEventListener('mousemove', function(e) {
+        if (!preview) return;
+        const x = Math.max(10, e.clientX - 220);
+        const y = Math.max(10, Math.min(window.innerHeight - 210, e.clientY - 100));
+        preview.style.left = x + 'px';
+        preview.style.top = y + 'px';
+      });
       li.addEventListener('click', async function() {
+        if (preview) preview.style.display = 'none';
         await postQueueCheckout(d.appointmentId, d.name);
         input.value = ''; results.innerHTML = ''; search.hidden = true;
         renderState.checkouts = ''; loadAll();
       });
       results.appendChild(li);
     });
+    // Async fetch missing lastNames for the visible matches
+    const needIds = [...new Set(matches.filter(function(d){ return !d.ownerLastName && d.customerId; }).map(function(d){ return d.customerId; }))];
+    if (needIds.length > 0) {
+      fetch(API_BASE_URL + '/customer-names', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ customerIds: needIds }) })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          const names = (data && data.names) || {};
+          matches.forEach(function(d, i) {
+            if (d.customerId && names[d.customerId]) {
+              d.ownerLastName = names[d.customerId];
+              const li = results.children[i];
+              if (li) {
+                const ns = li.querySelector('.queue-name');
+                if (ns) ns.textContent = d.name + ' ' + names[d.customerId];
+              }
+            }
+          });
+        }).catch(function(){});
+    }
   }
   toggle.addEventListener('click', async function(e) {
     e.stopPropagation();
