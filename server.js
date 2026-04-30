@@ -458,6 +458,9 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
     const end = now.toISOString();
     const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { checkOutTime: { startTime: start, endTime: end }, statuses: ['FINISHED'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
+    // Pre-fetch all unique customer lastNames in parallel
+    const uniqueCustomerIds = [...new Set(appointments.map(function(a){ return a.customerId; }).filter(Boolean))];
+    await Promise.all(uniqueCustomerIds.map(function(id){ return fetchClientLastName(id); }));
     let dogs = [];
     for (const appointment of appointments) {
       const checkOutTime = appointment.checkOutTime;
@@ -494,6 +497,9 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     const end = now.toISOString();
     const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { statuses: ['CHECKED_IN'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
+    // Pre-fetch all unique customer lastNames in parallel
+    const uniqueCustomerIds = [...new Set(appointments.map(function(a){ return a.customerId; }).filter(Boolean))];
+    await Promise.all(uniqueCustomerIds.map(function(id){ return fetchClientLastName(id); }));
     let dogs = [];
     for (const appointment of appointments) {
       let checkInTime = appointment.checkInTime;
