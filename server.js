@@ -210,12 +210,12 @@ function enrichFromCheckins(dogs, locationKey) {
 
 async function fetchClientLastName(customerId) {
   if (!customerId) return '';
-  if (clientCache.has(customerId)) return clientCache.get(customerId);
+  if (clientCache.has(customerId) && clientCache.get(customerId)) return clientCache.get(customerId);
   try {
     const r = await axios.request({
       method: 'post',
       url: 'https://openapi.moego.pet/v1/clients:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
+      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
       data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
     const clients = (r.data && r.data.clients) || [];
@@ -610,7 +610,7 @@ app.get('/debug-client', async (req, res) => {
     const r = await axios.request({
       method: 'post',
       url: 'https://openapi.moego.pet/v1/clients:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
+      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
       data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 5, pageToken: '1' }, filter: { ids: [customerId] } })
     });
     res.json({ raw: r.data });
