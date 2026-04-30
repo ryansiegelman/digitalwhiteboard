@@ -218,8 +218,9 @@ async function fetchClientLastName(customerId) {
       headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
       data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
-    const clients = (r.data && r.data.clients) || [];
-    const client = clients[0] || {};
+    const customers = (r.data && (r.data.customers || r.data.clients)) || [];
+    const match = customers.find(function(c){ return c && c.id === customerId; });
+    const client = match || customers[0] || {};
     const ln = client.lastName || client.familyName || client.last_name || '';
     const fn = client.fullName || client.name || '';
     const result = ln || (fn ? fn.trim().split(/\s+/).pop() : '');
