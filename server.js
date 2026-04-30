@@ -369,7 +369,7 @@ async function updateDogsFromWebhook(appointment) {
   if (!locationKey) { console.log('Warning Webhook: unknown businessId ' + businessId); return; }
   const checkOutTime = appointment.checkOutTime;
   if (!checkOutTime) return;
-  const ownerLastName = await fetchClientLastName(appointment.customerId);
+  const ownerLastName = '';
   const newDogs = (appointment.petServiceDetails || []).map(function(detail) {
     return {
       name: detail.pet ? (detail.pet.name || 'Unknown') : 'Unknown',
@@ -397,7 +397,7 @@ async function updateCheckinsFromWebhook(appointment) {
   if (!locationKey) { console.log('Warning Webhook: unknown businessId ' + businessId); return; }
   const checkInTime = appointment.checkInTime;
   if (!checkInTime) return;
-  const ownerLastName = await fetchClientLastName(appointment.customerId);
+  const ownerLastName = '';
   const newDogs = (appointment.petServiceDetails || []).map(function(detail) {
     return {
       name: detail.pet ? (detail.pet.name || 'Unknown') : 'Unknown',
@@ -458,13 +458,10 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
     const end = now.toISOString();
     const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { checkOutTime: { startTime: start, endTime: end }, statuses: ['FINISHED'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
-    // Pre-fetch all unique customer lastNames in parallel
-    const uniqueCustomerIds = [...new Set(appointments.map(function(a){ return a.customerId; }).filter(Boolean))];
-    await Promise.all(uniqueCustomerIds.map(function(id){ return fetchClientLastName(id); }));
     let dogs = [];
     for (const appointment of appointments) {
       const checkOutTime = appointment.checkOutTime;
-      const ownerLastName = await fetchClientLastName(appointment.customerId);
+      const ownerLastName = '';
       for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
         dogs.push({
@@ -497,14 +494,11 @@ async function fetchCheckinsForLocation(businessId, fileName) {
     const end = now.toISOString();
     const baseBody = { companyId: config.COMPANY_ID, businessIds: [businessId], filter: { statuses: ['CHECKED_IN'] } };
     const appointments = await fetchAllAppointmentPages(baseBody);
-    // Pre-fetch all unique customer lastNames in parallel
-    const uniqueCustomerIds = [...new Set(appointments.map(function(a){ return a.customerId; }).filter(Boolean))];
-    await Promise.all(uniqueCustomerIds.map(function(id){ return fetchClientLastName(id); }));
     let dogs = [];
     for (const appointment of appointments) {
       let checkInTime = appointment.checkInTime;
       if (!checkInTime) checkInTime = new Date().toISOString();
-      const ownerLastName = await fetchClientLastName(appointment.customerId);
+      const ownerLastName = '';
       for (const detail of (appointment.petServiceDetails || [])) {
         const pet = detail.pet || {};
         dogs.push({
