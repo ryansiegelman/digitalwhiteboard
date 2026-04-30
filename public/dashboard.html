@@ -248,7 +248,7 @@ function dismissCard(card, containerId, stateKey) {
 function createDogCard(dog, tf, labelText, containerId, stateKey) {
   const card = document.createElement('article');
   card.className = 'dog-card';
-  card.dataset.aptId = dog.appointmentId || dog.name || '';
+  card.dataset.aptId = dog.appointmentId || '';
   if ((Date.now() - new Date(dog[tf]).getTime()) / 1000 <= HIGHLIGHT_WINDOW_S) card.classList.add('highlight');
   const photoWrap = document.createElement('div');
   photoWrap.className = 'dog-photo';
@@ -304,8 +304,8 @@ function createDogCard(dog, tf, labelText, containerId, stateKey) {
 function renderPanel(containerId, dogs, tf, labelText, stateKey) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  const visible = dogs.filter(function(d){ return !clearedIds.has(d.appointmentId || d.name || ''); });
-  const ids = visible.map(function(d){ return d.appointmentId || d.name || ''; }).join(',');
+  const visible = dogs.filter(function(d){ return !clearedIds.has(d.appointmentId || ''); });
+  const ids = visible.map(function(d){ return d.appointmentId || ''; }).join(',');
   if (ids === renderState[stateKey]) { updateTimers(); return; }
   renderState[stateKey] = ids;
   container.innerHTML = '';
