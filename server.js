@@ -214,7 +214,7 @@ async function fetchClientLastName(customerId) {
   try {
     const r = await axios.request({
       method: 'post',
-      url: 'https://openapi.moego.pet/v1/clients:list',
+      url: 'https://openapi.moego.pet/v1/customers:list',
       headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
       data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
     });
@@ -609,7 +609,7 @@ app.get('/debug-client', async (req, res) => {
   try {
     const r = await axios.request({
       method: 'post',
-      url: 'https://openapi.moego.pet/v1/clients:list',
+      url: 'https://openapi.moego.pet/v1/customers:list',
       headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
       data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 5, pageToken: '1' }, filter: { ids: [customerId] } })
     });
