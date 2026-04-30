@@ -68,8 +68,8 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
 .empty-state,.loading-state { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; width:100%; height:100%; text-align:center; }
 .empty-check { display:block; font-size:3rem; line-height:1; color:#ffffff; font-weight:300; }
 .panel-header { position:relative; }
-.queue-toggle { position:absolute; top:50%; right:0.25rem; transform:translateY(-50%); background:transparent; color:var(--text-muted); border:1px solid var(--border-light); border-radius:50%; width:1.5rem; height:1.5rem; padding:0; font-size:0.95rem; line-height:1; cursor:pointer; opacity:0.35; transition:opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease; font-family:var(--font-body); }
-.queue-toggle:hover { opacity:1; color:var(--text); border-color:var(--text-secondary); }
+.queue-toggle { position:absolute; top:50%; right:0.5rem; transform:translateY(-50%); background:transparent; color:#ffffff; border:none; border-radius:0; width:1.5rem; height:1.5rem; padding:0; font-size:1.25rem; line-height:1; cursor:pointer; opacity:0.4; transition:opacity 0.2s ease; font-family:var(--font-body); font-weight:300; }
+.queue-toggle:hover { opacity:1; }
 .queue-search { margin:0 0 0.6rem; position:relative; }
 .queue-search input { width:100%; background:var(--surface-raised); border:1px solid var(--border-light); color:var(--text); padding:0.5rem 0.75rem; border-radius:8px; font-family:var(--font-body); font-size:0.9rem; outline:none; }
 .queue-search input:focus { border-color:var(--text-secondary); }
@@ -104,7 +104,7 @@ body::after { content:''; position:fixed; inset:0; background:radial-gradient(el
   <section class="panel panel-checkout" id="panel-checkout">
     <h2 class="panel-header">Checking Out<button class="queue-toggle" id="queue-toggle" aria-label="Add dog manually" title="Add dog manually">+</button></h2>
         <div class="queue-search" id="queue-search" hidden>
-          <input type="text" id="queue-input" placeholder="Type dog name..." autocomplete="off" spellcheck="false">
+          <input type="text" id="queue-input" placeholder="" autocomplete="off" spellcheck="false">
           <ul class="queue-results" id="queue-results"></ul>
         </div>
     <div class="panel-content" id="checkout-content">
@@ -411,13 +411,14 @@ function setupQueueUI() {
   if (!toggle || !search || !input || !results) return;
   function render(query) {
     const q = (query || '').trim().toLowerCase();
-    if (!q) { results.innerHTML = '<li class="empty">Type a name to search</li>'; return; }
+    if (!q) { results.innerHTML = ''; return; }
     const matches = inHouseCache.filter(function(d){ return (d.name || '').toLowerCase().includes(q); }).slice(0, 8);
     if (matches.length === 0) { results.innerHTML = '<li class="empty">No matches</li>'; return; }
     results.innerHTML = '';
     matches.forEach(function(d) {
       const li = document.createElement('li');
-      li.textContent = d.name + (d.lodgingLocation ? ' - ' + d.lodgingLocation : '');
+      const fullName = d.name + (d.ownerLastName ? ' ' + d.ownerLastName : '');
+      li.textContent = fullName + (d.breed ? ' - ' + d.breed : '');
       li.addEventListener('click', async function() {
         await postQueueCheckout(d.appointmentId, d.name);
         input.value = ''; results.innerHTML = ''; search.hidden = true;
