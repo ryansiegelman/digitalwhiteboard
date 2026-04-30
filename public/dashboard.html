@@ -417,7 +417,9 @@ function setupQueueUI() {
   const input = document.getElementById('queue-input');
   const results = document.getElementById('queue-results');
   if (!toggle || !search || !input || !results) return;
+  function hidePreview() { const p = document.getElementById('queue-preview'); if (p) p.style.display = 'none'; }
   function render(query) {
+    hidePreview();
     const q = (query || '').trim().toLowerCase();
     if (!q) { results.innerHTML = ''; return; }
     const matches = inHouseCache.filter(function(d){ return (d.name || '').toLowerCase().includes(q); }).sort(function(a, b){ return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()); }).slice(0, 8);
@@ -452,7 +454,7 @@ function setupQueueUI() {
       li.addEventListener('click', async function() {
         if (preview) preview.style.display = 'none';
         await postQueueCheckout(d.appointmentId, d.name);
-        input.value = ''; results.innerHTML = ''; search.hidden = true;
+        input.value = ''; results.innerHTML = ''; search.hidden = true; hidePreview();
         renderState.checkouts = ''; loadAll();
       });
       results.appendChild(li);
@@ -485,11 +487,11 @@ function setupQueueUI() {
   });
   input.addEventListener('input', function(e) { render(e.target.value); });
   input.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { search.hidden = true; input.value = ''; results.innerHTML = ''; }
+    if (e.key === 'Escape') { search.hidden = true; input.value = ''; results.innerHTML = ''; hidePreview(); }
   });
   document.addEventListener('click', function(e) {
     if (search.hidden) return;
-    if (!search.contains(e.target) && e.target !== toggle) { search.hidden = true; }
+    if (!search.contains(e.target) && e.target !== toggle) { search.hidden = true; hidePreview(); }
   });
 }
 
