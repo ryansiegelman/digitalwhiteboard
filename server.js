@@ -12,6 +12,13 @@ function getDismissedTimestamps(location) {
   if (!dismissedTimestamps.has(location)) dismissedTimestamps.set(location, new Map());
   return dismissedTimestamps.get(location);
 }
+// Manually queued checkouts (Front Desk early-trigger)
+// Map of location -> Array<dog entry with manual:true>
+const manualCheckouts = new Map();
+function getManualCheckouts(location) {
+  if (!manualCheckouts.has(location)) manualCheckouts.set(location, []);
+  return manualCheckouts.get(location);
+}
 // Cleanup dismissed IDs older than 12 hours
 function getDismissedSet(location) {
   if (!dismissedStore.has(location)) dismissedStore.set(location, new Set());
@@ -58,6 +65,57 @@ app.delete('/dismissed', (req, res) => {
   if (dismissedTimestamps.has(location)) dismissedTimestamps.get(location).clear();
   console.log('Dismissed list cleared for location: ' + location);
   res.json({ ok: true, dismissed: [] });
+});
+
+// In-house dogs (currently CHECKED_IN), no time filter - for manual queue search
+app.get('/in-house', (req, res) => {
+  const location = req.query.location || 'default';
+  const filePath = location === 'default' ? path.join(__dirname, 'checkins.json') : path.join(__dirname, 'checkins-' + location + '.json');
+  if (fs.existsSync(filePath)) {
+    res.json(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
+  } else {
+    res.json([]);
+  }
+});
+
+// Manually queue a dog to the Checking Out panel (early-trigger feature)
+app.post('/queue-checkout', (req, res) => {
+  const location = req.query.location || req.body.location || 'default';
+  const aptId = req.body.appointmentId || req.body.id || '';
+  if (!aptId) return res.status(400).json({ error: 'appointmentId required' });
+  const filePath = location === 'default' ? path.join(__dirname, 'checkins.json') : path.join(__dirname, 'checkins-' + location + '.json');
+  let inHouse = [];
+  try { inHouse = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch(e) {}
+  const dog = inHouse.find(function(d){ return d.appointmentId === aptId; });
+  if (!dog) return res.status(404).json({ error: 'dog not in in-house list' });
+  const queue = getManualCheckouts(location);
+  if (queue.some(function(d){ return d.appointmentId === aptId; })) {
+    return res.json({ ok: true, alreadyQueued: true });
+  }
+  const entry = {
+    name: dog.name,
+    imageUrl: dog.imageUrl,
+    ownerLastName: dog.ownerLastName || '',
+    checkOutTime: new Date().toISOString(),
+    appointmentId: dog.appointmentId,
+    customerId: dog.customerId,
+    serviceItemType: dog.serviceItemType,
+    serviceName: dog.serviceName,
+    lodgingLocation: dog.lodgingLocation || '',
+    manual: true
+  };
+  queue.unshift(entry);
+  console.log('Manual checkout queued: ' + dog.name + ' (' + aptId + ')');
+  res.json({ ok: true, dog: entry });
+});
+
+app.delete('/queue-checkout', (req, res) => {
+  const location = req.query.location || 'default';
+  const aptId = req.query.appointmentId || '';
+  const queue = getManualCheckouts(location);
+  const idx = queue.findIndex(function(d){ return d.appointmentId === aptId; });
+  if (idx >= 0) queue.splice(idx, 1);
+  res.json({ ok: true });
 });
 
 const LOCATIONS = {};
@@ -190,9 +248,12 @@ app.get('/dogs', (req, res) => {
       const t = d.checkOutTime || d.check_out_time;
       return t && new Date(t).getTime() >= cutoff;
     });
-    res.json(recent);
+    // Merge manual queue entries; prefer real entries (de-dupe by appointmentId)
+    const realIds = new Set(recent.map(function(d){ return d.appointmentId; }).filter(Boolean));
+    const manual = getManualCheckouts(location).filter(function(d){ return !realIds.has(d.appointmentId); });
+    res.json(manual.concat(recent));
   } else {
-    res.json([]);
+    res.json(getManualCheckouts(location));
   }
 });
 
@@ -475,6 +536,12 @@ setInterval(() => {
     for (const id of [...set]) {
       if ((ts.get(id) || 0) < cutoff) { set.delete(id); ts.delete(id); }
     }
+  }
+  // Also expire manual queue entries older than 30 min (safety net if real checkout never fires)
+  const manualCutoff = Date.now() - 30 * 60 * 1000;
+  for (const [loc, arr] of manualCheckouts) {
+    const filtered = arr.filter(function(d){ return new Date(d.checkOutTime).getTime() >= manualCutoff; });
+    if (filtered.length !== arr.length) manualCheckouts.set(loc, filtered);
   }
 }, 60 * 60 * 1000);
 
