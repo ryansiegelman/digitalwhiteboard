@@ -105,6 +105,9 @@ app.post('/queue-checkout', (req, res) => {
     ? inHouse.find(function(d){ return d.appointmentId === aptId && d.name === dogName; })
     : inHouse.find(function(d){ return d.appointmentId === aptId; });
   if (!dog) return res.status(404).json({ error: 'dog not in in-house list' });
+  // Re-adding clears any prior dismissal so the dog reappears on all dashboards
+  if (dismissedStore.has(location)) dismissedStore.get(location).delete(aptId);
+  if (dismissedTimestamps.has(location)) dismissedTimestamps.get(location).delete(aptId);
   const queue = getManualCheckouts(location);
   if (queue.some(function(d){ return d.appointmentId === aptId && d.name === dog.name; })) {
     return res.json({ ok: true, alreadyQueued: true });
