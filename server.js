@@ -6,6 +6,12 @@ const clientCache = new Map();
 // In-memory dismissed IDs store for cross-screen sync
 // Map of location -> Set of dismissed appointmentIds
 const dismissedStore = new Map();
+// Parallel map: location -> Map(id -> timestamp ms) for cleanup
+const dismissedTimestamps = new Map();
+function getDismissedTimestamps(location) {
+  if (!dismissedTimestamps.has(location)) dismissedTimestamps.set(location, new Map());
+  return dismissedTimestamps.get(location);
+}
 // Cleanup dismissed IDs older than 12 hours
 function getDismissedSet(location) {
   if (!dismissedStore.has(location)) dismissedStore.set(location, new Set());
@@ -40,9 +46,18 @@ app.post('/dismissed', (req, res) => {
   const id = req.body.id || req.body.appointmentId || '';
   if (id) {
     getDismissedSet(location).add(String(id));
+    getDismissedTimestamps(location).set(String(id), Date.now());
     console.log('Dismissed: ' + id + ' for location: ' + location);
   }
   res.json({ ok: true, dismissed: Array.from(getDismissedSet(location)) });
+});
+
+app.delete('/dismissed', (req, res) => {
+  const location = req.query.location || 'default';
+  if (dismissedStore.has(location)) dismissedStore.get(location).clear();
+  if (dismissedTimestamps.has(location)) dismissedTimestamps.get(location).clear();
+  console.log('Dismissed list cleared for location: ' + location);
+  res.json({ ok: true, dismissed: [] });
 });
 
 const LOCATIONS = {};
@@ -446,9 +461,26 @@ function cleanupStaleEntries() {
 }
 
 const mode = config.WEBHOOK_MODE;
+let _isPolling = false;
+async function fetchAllLocationsGuarded() {
+  if (_isPolling) { console.log(' Skipping poll: previous run still in progress'); return; }
+  _isPolling = true;
+  try { await fetchAllLocations(); } finally { _isPolling = false; }
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+  for (const [loc, set] of dismissedStore) {
+    const ts = getDismissedTimestamps(loc);
+    for (const id of [...set]) {
+      if ((ts.get(id) || 0) < cutoff) { set.delete(id); ts.delete(id); }
+    }
+  }
+}, 60 * 60 * 1000);
+
 if (mode === 'poll' || mode === 'hybrid') {
-  setInterval(fetchAllLocations, config.POLL_INTERVAL_MS);
-  fetchAllLocations();
+  setInterval(fetchAllLocationsGuarded, config.POLL_INTERVAL_MS);
+  fetchAllLocationsGuarded();
   console.log(' Polling active (every ' + (config.POLL_INTERVAL_MS / 1000) + 's)');
 }
 if (mode === 'webhook') {
