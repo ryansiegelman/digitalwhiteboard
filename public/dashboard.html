@@ -398,9 +398,9 @@ async function fetchInHouse() {
     return inHouseCache;
   } catch(e) { return []; }
 }
-async function postQueueCheckout(appointmentId) {
+async function postQueueCheckout(appointmentId, name) {
   try {
-    await fetch(API_BASE_URL + '/queue-checkout?location=' + currentLocation, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ appointmentId: appointmentId }) });
+    await fetch(API_BASE_URL + '/queue-checkout?location=' + currentLocation, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ appointmentId: appointmentId, name: name }) });
   } catch(e) {}
 }
 function setupQueueUI() {
@@ -419,7 +419,7 @@ function setupQueueUI() {
       const li = document.createElement('li');
       li.textContent = d.name + (d.lodgingLocation ? ' - ' + d.lodgingLocation : '');
       li.addEventListener('click', async function() {
-        await postQueueCheckout(d.appointmentId);
+        await postQueueCheckout(d.appointmentId, d.name);
         input.value = ''; results.innerHTML = ''; search.hidden = true;
         renderState.checkouts = ''; loadAll();
       });
