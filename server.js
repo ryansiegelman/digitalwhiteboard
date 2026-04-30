@@ -82,14 +82,17 @@ app.get('/in-house', (req, res) => {
 app.post('/queue-checkout', (req, res) => {
   const location = req.query.location || req.body.location || 'default';
   const aptId = req.body.appointmentId || req.body.id || '';
+  const dogName = req.body.name || '';
   if (!aptId) return res.status(400).json({ error: 'appointmentId required' });
   const filePath = location === 'default' ? path.join(__dirname, 'checkins.json') : path.join(__dirname, 'checkins-' + location + '.json');
   let inHouse = [];
   try { inHouse = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch(e) {}
-  const dog = inHouse.find(function(d){ return d.appointmentId === aptId; });
+  const dog = dogName
+    ? inHouse.find(function(d){ return d.appointmentId === aptId && d.name === dogName; })
+    : inHouse.find(function(d){ return d.appointmentId === aptId; });
   if (!dog) return res.status(404).json({ error: 'dog not in in-house list' });
   const queue = getManualCheckouts(location);
-  if (queue.some(function(d){ return d.appointmentId === aptId; })) {
+  if (queue.some(function(d){ return d.appointmentId === aptId && d.name === dog.name; })) {
     return res.json({ ok: true, alreadyQueued: true });
   }
   const entry = {
@@ -112,9 +115,17 @@ app.post('/queue-checkout', (req, res) => {
 app.delete('/queue-checkout', (req, res) => {
   const location = req.query.location || 'default';
   const aptId = req.query.appointmentId || '';
+  const dogName = req.query.name || '';
   const queue = getManualCheckouts(location);
-  const idx = queue.findIndex(function(d){ return d.appointmentId === aptId; });
-  if (idx >= 0) queue.splice(idx, 1);
+  if (dogName) {
+    const idx = queue.findIndex(function(d){ return d.appointmentId === aptId && d.name === dogName; });
+    if (idx >= 0) queue.splice(idx, 1);
+  } else {
+    // No name: remove all entries with this aptId (legacy behavior)
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].appointmentId === aptId) queue.splice(i, 1);
+    }
+  }
   res.json({ ok: true });
 });
 
@@ -249,8 +260,8 @@ app.get('/dogs', (req, res) => {
       return t && new Date(t).getTime() >= cutoff;
     });
     // Merge manual queue entries; prefer real entries (de-dupe by appointmentId)
-    const realIds = new Set(recent.map(function(d){ return d.appointmentId; }).filter(Boolean));
-    const manual = getManualCheckouts(location).filter(function(d){ return !realIds.has(d.appointmentId); });
+    const realKeys = new Set(recent.map(function(d){ return d.appointmentId + ':' + d.name; }));
+    const manual = getManualCheckouts(location).filter(function(d){ return !realKeys.has(d.appointmentId + ':' + d.name); });
     res.json(manual.concat(recent));
   } else {
     res.json(getManualCheckouts(location));
