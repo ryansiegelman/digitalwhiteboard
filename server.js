@@ -222,29 +222,51 @@ function enrichFromCheckins(dogs, locationKey) {
   });
 }
 
+// Bulk cache: fetched once at startup, then used for all lookups
+let customersBulkCache = null; // Map<customerId, lastName>
+let customersBulkPromise = null;
+async function loadAllCustomers() {
+  if (customersBulkCache) return customersBulkCache;
+  if (customersBulkPromise) return customersBulkPromise;
+  customersBulkPromise = (async () => {
+    const m = new Map();
+    let pageToken = '1';
+    let safety = 100;
+    while (safety-- > 0) {
+      try {
+        const r = await axios.request({
+          method: 'post',
+          url: 'https://openapi.moego.pet/v1/customers:list',
+          headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
+          data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 100, pageToken: pageToken } })
+        });
+        const list = (r.data && (r.data.customers || r.data.clients)) || [];
+        for (const c of list) {
+          if (c && c.id) {
+            const ln = c.lastName || c.familyName || c.last_name || '';
+            const fn = c.fullName || c.name || '';
+            const result = ln || (fn ? String(fn).trim().split(/\s+/).pop() : '');
+            m.set(c.id, result);
+          }
+        }
+        const next = (r.data && r.data.pagination && r.data.pagination.nextPageToken) || r.data.nextPageToken;
+        if (!next || next === pageToken || list.length === 0) break;
+        pageToken = next;
+      } catch (err) {
+        console.error('Customer bulk load failed:', err.message);
+        break;
+      }
+    }
+    customersBulkCache = m;
+    console.log('Customer bulk cache loaded: ' + m.size + ' customers');
+    return m;
+  })();
+  return customersBulkPromise;
+}
 async function fetchClientLastName(customerId) {
   if (!customerId) return '';
-  if (clientCache.has(customerId) && clientCache.get(customerId)) return clientCache.get(customerId);
-  try {
-    const r = await axios.request({
-      method: 'post',
-      url: 'https://openapi.moego.pet/v1/customers:list',
-      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'application/json' },
-      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 1, pageToken: '1' }, filter: { ids: [customerId] } })
-    });
-    const customers = (r.data && (r.data.customers || r.data.clients)) || [];
-    const match = customers.find(function(c){ return c && c.id === customerId; });
-    const client = match || customers[0] || {};
-    const ln = client.lastName || client.familyName || client.last_name || '';
-    const fn = client.fullName || client.name || '';
-    const result = ln || (fn ? fn.trim().split(/\s+/).pop() : '');
-    clientCache.set(customerId, result);
-    return result;
-  } catch (err) {
-    console.error('Client lookup failed for', customerId, ':', err.message, err.response && err.response.status);
-    clientCache.set(customerId, '');
-    return '';
-  }
+  const cache = await loadAllCustomers();
+  return (cache && cache.get(customerId)) || '';
 }
 
 function extractBreed(detail) {
