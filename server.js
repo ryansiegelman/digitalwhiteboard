@@ -68,6 +68,20 @@ app.delete('/dismissed', (req, res) => {
 });
 
 // In-house dogs (currently CHECKED_IN), no time filter - for manual queue search
+app.post('/customer-names', async (req, res) => {
+  const ids = (req.body && req.body.customerIds) || [];
+  if (!ids.length) return res.json({ names: {} });
+  const result = {};
+  // Concurrency limit: chunks of 5
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += 5) chunks.push(ids.slice(i, i + 5));
+  for (const chunk of chunks) {
+    const lookups = await Promise.all(chunk.map(function(id){ return fetchClientLastName(id).then(function(ln){ return [id, ln]; }); }));
+    for (const [id, ln] of lookups) result[id] = ln;
+  }
+  res.json({ names: result });
+});
+
 app.get('/in-house', (req, res) => {
   const location = req.query.location || 'default';
   const filePath = location === 'default' ? path.join(__dirname, 'checkins.json') : path.join(__dirname, 'checkins-' + location + '.json');
