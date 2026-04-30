@@ -105,6 +105,7 @@ app.post('/queue-checkout', (req, res) => {
     serviceItemType: dog.serviceItemType,
     serviceName: dog.serviceName,
     lodgingLocation: dog.lodgingLocation || '',
+    breed: dog.breed || '',
     manual: true
   };
   queue.unshift(entry);
@@ -229,6 +230,17 @@ async function fetchClientLastName(customerId) {
     clientCache.set(customerId, '');
     return '';
   }
+}
+
+function extractBreed(detail) {
+  const pet = (detail && detail.pet) || {};
+  const candidates = [pet.breed, pet.breedName, pet.breed_name];
+  if (Array.isArray(pet.breeds) && pet.breeds.length) {
+    const b = pet.breeds[0];
+    candidates.push(typeof b === 'string' ? b : (b && (b.name || b.breedName)));
+  }
+  for (const c of candidates) { if (c) return String(c).trim(); }
+  return '';
 }
 
 function extractPetPhoto(detail) {
@@ -367,7 +379,8 @@ async function updateDogsFromWebhook(appointment) {
       customerId: appointment.customerId,
       serviceItemType: (function(sds){ for(var i=0;i<(sds||[]).length;i++){ var t=(sds[i].serviceItemType||'').trim(); if(t) return t; } return ''; })(detail.serviceDetails),
       serviceName: extractServiceName(detail),
-      lodgingLocation: extractLodgingLocation(detail)
+      lodgingLocation: extractLodgingLocation(detail),
+      breed: extractBreed(detail)
     };
   });
   if (newDogs.length === 0) return;
@@ -393,7 +406,8 @@ async function updateCheckinsFromWebhook(appointment) {
       appointmentId: appointment.id,
       serviceItemType: (function(sds){ for(var i=0;i<(sds||[]).length;i++){ var t=(sds[i].serviceItemType||'').trim(); if(t) return t; } return ''; })(detail.serviceDetails),
       serviceName: extractServiceName(detail),
-      lodgingLocation: extractLodgingLocation(detail)
+      lodgingLocation: extractLodgingLocation(detail),
+      breed: extractBreed(detail)
     };
   });
   if (newDogs.length === 0) return;
@@ -458,7 +472,8 @@ async function fetchAppointmentsForLocation(businessId, fileName) {
           customerId: appointment.customerId,
           serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
           serviceName: extractServiceName(detail),
-          lodgingLocation: extractLodgingLocation(detail)
+          lodgingLocation: extractLodgingLocation(detail),
+          breed: extractBreed(detail)
         });
       }
     }
@@ -493,7 +508,8 @@ async function fetchCheckinsForLocation(businessId, fileName) {
           appointmentId: appointment.id,
           serviceItemType: (detail.serviceDetails && detail.serviceDetails[0] ? detail.serviceDetails[0].serviceItemType : '') || '',
           serviceName: extractServiceName(detail),
-          lodgingLocation: extractLodgingLocation(detail)
+          lodgingLocation: extractLodgingLocation(detail),
+          breed: extractBreed(detail)
         });
       }
     }
