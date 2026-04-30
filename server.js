@@ -604,6 +604,21 @@ app.get('/debug-files', (req, res) => {
 });
 
 // Debug: dump raw MoeGo API response for checked-in appointments
+app.get('/debug-client', async (req, res) => {
+  const customerId = req.query.customerId;
+  try {
+    const r = await axios.request({
+      method: 'post',
+      url: 'https://openapi.moego.pet/v1/clients:list',
+      headers: { Authorization: 'Basic ' + config.AUTH_KEY, 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ companyId: config.COMPANY_ID, pagination: { pageSize: 5, pageToken: '1' }, filter: { ids: [customerId] } })
+    });
+    res.json({ raw: r.data });
+  } catch (err) {
+    res.json({ error: (err.response && err.response.data) || err.message, status: err.response && err.response.status });
+  }
+});
+
 app.get('/debug-raw', async (req, res) => {
   try {
     const r = await axios.request({
