@@ -279,7 +279,7 @@ function extractBreed(detail) {
     const b = pet.breeds[0];
     candidates.push(typeof b === 'string' ? b : (b && (b.name || b.breedName)));
   }
-  for (const c of candidates) { if (c) return String(c).trim(); }
+  for (const c of candidates) { if (c) return String(c).trim().replace(/\s*\([^)]*\)\s*$/, '').trim(); }
   return '';
 }
 
