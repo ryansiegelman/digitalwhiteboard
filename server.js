@@ -203,4 +203,3 @@ app.listen(PORT, () => {
   console.log(`Gingr subdomain: ${GINGR_SUBDOMAIN}.gingrapp.com`);
   console.log(`API key configured: ${!!GINGR_API_KEY}`);
 });
-app.get('/debug-lodging', async (req, res) => { const tries = [['reservations',{checked_in:'true',include_lodging:'true'}],['reservations',{checked_in:'true',expand:'lodging'}],['lodging',{}],['reservations_lodging',{}],['animals_lodging',{}],['lodging_locations',{}],['kennels',{}],['pens',{}],['locations',{}]]; const out = {}; for (const [ep, p] of tries) { try { const url = `https://${GINGR_SUBDOMAIN}.gingrapp.com/api/v1/${ep}`; const formBody = new URLSearchParams({ key: GINGR_API_KEY, ...p }).toString(); const r = await axios.post(url, formBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000, validateStatus: () => true }); const raw = r.data; const dataObj = raw && raw.data; const firstKey = dataO
