@@ -25,7 +25,7 @@ const VISIBLE_WINDOW_MS = 10 * 60 * 1000;
 // Cache: hold Gingr responses for 4 sec to avoid hammering the API
 // (frontend polls every 5 sec, so this gives us breathing room)
 const CACHE_TTL_MS = 4 * 1000;
-const cache = new Map();
+const cache = new Map(); const queueCheckouts = new Map();
 
 // ---------- Middleware ----------
 app.use(cors({ origin: '*' }));
@@ -163,7 +163,7 @@ app.get('/dogs', async (req, res) => {
         return new Date(r.check_out_date).getTime() >= cutoff;
       })
       .map(r => transformReservation(r, 'checkOutTime'))
-      .sort((a, b) => new Date(b.checkOutTime) - new Date(a.checkOutTime));
+      .sort((a,b)=>new Date(b.checkOutTime)-new Date(a.checkOutTime)); const _qcoCut=Date.now()-VISIBLE_WINDOW_MS; for(const [_qid,_qe] of queueCheckouts.entries()){if(_qe.ts<_qcoCut) queueCheckouts.delete(_qid); else if(!dogs.find(d=>d.appointmentId===_qid)) dogs.push(_qe.dog);} dogs.sort((a,b)=>new Date(b.checkOutTime)-new Date(a.checkOutTime));
 
     res.json(dogs);
   } catch (err) {
@@ -203,3 +203,5 @@ app.listen(PORT, () => {
   console.log(`Gingr subdomain: ${GINGR_SUBDOMAIN}.gingrapp.com`);
   console.log(`API key configured: ${!!GINGR_API_KEY}`);
 });
+app.post('/queue-checkout', async (req, res) => { try { const id = req.body && req.body.appointmentId; const name = req.body && req.body.name; if (!id) return res.status(400).json({error:'appointmentId required'}); const _r = await callGingr({checked_in:'true'}); const reservations = await enrichReservations(_r); const found = reservations.find(r => String(r.reservation_id) === String(id)); let dog; if (found) { dog = transformReservation(found, 'checkOutTime'); dog.checkOutTime = new Date().toISOString(); } else { dog = {appointmentId:String(id),name:name||'',imageUrl:'',serviceName:'',serviceItemType:'',breed:'',customerId:'',lodgingLocation:'',checkOutTime:new Date().toISOString()}; } queueCheckouts.set(String(id),{dog,ts:Date.now()}); res.json({ok:true}); } catch (err) { console.error('queue-checkout error:', err.message); res.status(500).json({error:err.message}); } });
+{ console.error('queue-checkout error:', err.message); res.status(500).json({error:err.message}); } });
