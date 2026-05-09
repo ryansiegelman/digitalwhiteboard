@@ -203,5 +203,4 @@ app.listen(PORT, () => {
   console.log(`Gingr subdomain: ${GINGR_SUBDOMAIN}.gingrapp.com`);
   console.log(`API key configured: ${!!GINGR_API_KEY}`);
 });
-app.post('/queue-checkout', async (req, res) => { try { const id = req.body && req.body.appointmentId; const name = req.body && req.body.name; if (!id) return res.status(400).json({error:'appointmentId required'}); const _r = await callGingr({checked_in:'true'}); const reservations = await enrichReservations(_r); const found = reservations.find(r => String(r.reservation_id) === String(id)); let dog; if (found) { dog = transformReservation(found, 'checkOutTime'); dog.checkOutTime = new Date().toISOString(); } else { dog = {appointmentId:String(id),name:name||'',imageUrl:'',serviceName:'',serviceItemType:'',breed:'',customerId:'',lodgingLocation:'',checkOutTime:new Date().toISOString()}; } queueCheckouts.set(String(id),{dog,ts:Date.now()}); res.json({ok:true}); } catch (err) { console.error('queue-checkout error:', err.message); res.status(500).json({error:err.message}); } });
 { console.error('queue-checkout error:', err.message); res.status(500).json({error:err.message}); } });
