@@ -22,20 +22,17 @@ const LOCATIONS = {
 const CACHE_TTL_MS = 4 * 1000;
 const cache = new Map();
 
+// Animal cache (image lookups) - longer TTL since images don't change often
+const ANIMAL_CACHE_TTL_MS = 5 * 60 * 1000;
+let allAnimalsCache = null;
+let allAnimalsCacheTs = 0;
+
 // ---------- Middleware ----------
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.static('public', { index: 'dashboard.html' }));
 
 // ---------- Helpers ----------
-function pick(obj) {
-  for (let i = 1; i < arguments.length; i++) {
-    const k = arguments[i];
-    if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
-  }
-  return '';
-}
-
 function stripHtml(s) {
   return String(s || '').replace(/<[^>]*>/g, '').trim();
 }
@@ -43,8 +40,8 @@ function stripHtml(s) {
 function mapServiceType(typeStr) {
   if (!typeStr) return '';
   const t = String(typeStr).trim().toLowerCase();
-  if (t.includes('board')) return 'BOARDING';
   if (t.includes('daycare') || t.includes('day care')) return 'DAYCARE';
+  if (t.includes('board')) return 'BOARDING';
   if (t.includes('eval') || t.includes('temperament')) return 'EVALUATION';
   if (t.includes('groom')) return 'GROOMING';
   if (t.includes('bath')) return 'BATH';
@@ -52,27 +49,31 @@ function mapServiceType(typeStr) {
   return '';
 }
 
+function stampToIso(stamp) {
+  if (!stamp) return '';
+  const n = parseInt(stamp, 10);
+  if (!n || isNaN(n)) return '';
+  // Gingr stamps are seconds; multiply by 1000 for ms
+  return new Date(n * 1000).toISOString();
+}
+
 function transformItem(item, timeField) {
-  const animal = item.animal || {};
-  const owner = item.owner || {};
-
-  const serviceTypeRaw = pick(item, 'reservation_type_name', 'service_name', 'type') ||
-    (item.reservation_type && item.reservation_type.type) || '';
-
-  const lodgingLoc = pick(item, 'lodging_name', 'lodging_location', 'kennel_name', 'pen', 'lodging') ||
-    (item.lodging && (item.lodging.name || item.lodging.label)) || '';
+  const checkInIso = stampToIso(item.check_in_stamp);
+  const checkOutIso = stampToIso(item.check_out_stamp);
 
   return {
-    appointmentId: String(pick(item, 'reservation_id', 'id', 'appointment_id') || ''),
-    name: stripHtml(pick(animal, 'name', 'first_name') || pick(item, 'animal_name', 'pet_name', 'name', 'first_name') || 'Unknown'),
-    ownerLastName: stripHtml(pick(owner, 'last_name', 'lastname') || pick(item, 'owner_last_name', 'last_name') || ''),
-    imageUrl: pick(animal, 'image', 'image_url', 'photo', 'photo_url') || pick(item, 'animal_image', 'image', 'image_url', 'photo') || '',
-    serviceName: String(serviceTypeRaw).trim(),
-    serviceItemType: mapServiceType(serviceTypeRaw),
-    breed: stripHtml(pick(animal, 'breed') || pick(item, 'animal_breed', 'breed') || ''),
-    customerId: String(pick(owner, 'id', 'customer_id') || pick(item, 'customer_id', 'owner_id') || ''),
-    lodgingLocation: stripHtml(lodgingLoc),
-    [timeField]: pick(item, 'check_in_time', 'time_in', 'checkin_time', 'check_in_date', 'check_out_time', 'time_out', 'checkout_time', 'check_out_date', 'time') || ''
+    appointmentId: String(item.id || item.reservation_id || ''),
+    name: stripHtml(item.a_first || item.animal_name || item.name || 'Unknown'),
+    ownerLastName: stripHtml(item.o_last || item.owner_last_name || ''),
+    imageUrl: '', // populated by enrichment
+    serviceName: stripHtml(item.type || ''),
+    serviceItemType: mapServiceType(item.type),
+    breed: stripHtml(item.breed_name || item.breed || ''),
+    customerId: String(item.owner_id || ''),
+    lodgingLocation: stripHtml(item.run_name || item.area_name || ''),
+    statusString: item.status_string || '',
+    [timeField]: timeField === 'checkInTime' ? checkInIso : (checkOutIso || checkInIso),
+    _animalId: String(item.animal_id || '')
   };
 }
 
@@ -95,6 +96,45 @@ async function callBackOfHouse() {
   return data;
 }
 
+// Fetch all animals once (cached for 5 min) for image lookup
+async function fetchAllAnimals() {
+  if (allAnimalsCache && Date.now() - allAnimalsCacheTs < ANIMAL_CACHE_TTL_MS) return allAnimalsCache;
+  if (!GINGR_API_KEY) return [];
+  try {
+    const url = 'https://' + GINGR_SUBDOMAIN + '.gingrapp.com/api/v1/animals';
+    const formBody = new URLSearchParams({ key: GINGR_API_KEY }).toString();
+    const r = await axios.post(url, formBody, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeout: 15000
+    });
+    const raw = r.data;
+    if (raw.error) return [];
+    const arr = raw.data ? Object.values(raw.data) : [];
+    allAnimalsCache = arr;
+    allAnimalsCacheTs = Date.now();
+    return arr;
+  } catch (err) {
+    console.error('fetchAllAnimals error:', err.message);
+    return [];
+  }
+}
+
+async function enrichWithImages(items) {
+  const all = await fetchAllAnimals();
+  const byId = {};
+  for (const a of all) {
+    if (a && a.id) byId[String(a.id)] = a;
+  }
+  return items.map(item => {
+    const fa = byId[item._animalId];
+    if (fa) {
+      item.imageUrl = fa.image || fa.image_url || fa.photo || fa.photo_url || '';
+    }
+    delete item._animalId;
+    return item;
+  });
+}
+
 // ---------- Routes ----------
 app.get('/health', (req, res) => {
   res.json({
@@ -114,7 +154,8 @@ app.get('/checkins', async (req, res) => {
   try {
     const data = await callBackOfHouse();
     const items = (data.checking_in || []).map(item => transformItem(item, 'checkInTime'));
-    res.json(items);
+    const enriched = await enrichWithImages(items);
+    res.json(enriched);
   } catch (err) {
     console.error('checkins error:', err.message);
     res.status(500).json({ error: err.message, dogs: [] });
@@ -125,7 +166,8 @@ app.get('/dogs', async (req, res) => {
   try {
     const data = await callBackOfHouse();
     const items = (data.checking_out || []).map(item => transformItem(item, 'checkOutTime'));
-    res.json(items);
+    const enriched = await enrichWithImages(items);
+    res.json(enriched);
   } catch (err) {
     console.error('dogs error:', err.message);
     res.status(500).json({ error: err.message, dogs: [] });
@@ -147,8 +189,9 @@ app.get('/in-house', async (req, res) => {
         unique.push(d);
       }
     }
-    unique.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    res.json(unique);
+    const enriched = await enrichWithImages(unique);
+    enriched.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    res.json(enriched);
   } catch (err) {
     console.error('in-house error:', err.message);
     res.status(500).json({ error: err.message });
