@@ -76,7 +76,7 @@ function transformReservation(r, timeField) {
     appointmentId: String(r.reservation_id || ''),
     name: (animal.name || 'Unknown').trim(),
     ownerLastName: (owner.last_name || '').trim(),
-    imageUrl: extractAnimalPhoto(animal),
+    imageUrl: extractAnimalPhoto(r._fullAnimal || animal), lodgingLocation: extractLodging(r._fullAnimal, r),
     serviceName: serviceTypeRaw.trim(),
     serviceItemType: mapServiceType(serviceTypeRaw),
     breed: (animal.breed || '').trim(),
@@ -130,7 +130,7 @@ app.get('/locations', (req, res) => {
 // Currently checked-in dogs whose check_in_date is within last 10 min
 app.get('/checkins', async (req, res) => {
   try {
-    const reservations = await callGingr({ checked_in: 'true' });
+    const _r = await callGingr({ checked_in: 'true' }); const reservations = await enrichReservations(_r);
     const cutoff = Date.now() - VISIBLE_WINDOW_MS;
 
     const dogs = reservations
@@ -153,7 +153,7 @@ app.get('/dogs', async (req, res) => {
   try {
     // Use today's date for the date range (Gingr requires it when checked_in=false)
     const today = new Date().toISOString().split('T')[0];
-    const reservations = await callGingr({ start_date: today, end_date: today });
+    const _r2 = await callGingr({ start_date: today, end_date: today }); const reservations = await enrichReservations(_r2);
     const cutoff = Date.now() - VISIBLE_WINDOW_MS;
 
     const dogs = reservations
@@ -175,7 +175,7 @@ app.get('/dogs', async (req, res) => {
 // Debug: see raw Gingr response for currently checked-in
 app.get('/debug-gingr', async (req, res) => {
   try {
-    const reservations = await callGingr({ checked_in: 'true' });
+    const _r = await callGingr({ checked_in: 'true' }); const reservations = await enrichReservations(_r);
     res.json({ count: reservations.length, reservations });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -186,13 +186,17 @@ app.get('/debug-gingr', async (req, res) => {
 app.get('/debug-today', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const reservations = await callGingr({ start_date: today, end_date: today });
+    const _r2 = await callGingr({ start_date: today, end_date: today }); const reservations = await enrichReservations(_r2);
     res.json({ count: reservations.length, reservations });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+function extractLodging(a, r) { if (a) { const v = a.lodging || a.kennel || a.lodging_name || a.lodging_location || a.pen || ''; if (v) return String(v).trim(); } if (r && r.lodging) { const v = r.lodging.name || r.lodging.kennel || ''; if (v) return String(v).trim(); } return ''; }
+async function fetchAnimalFull(id) { if (!id || !GINGR_API_KEY) return null; const cacheKey = 'animal:' + id; const cached = cache.get(cacheKey); if (cached && Date.now() - cached.ts < 60000) return cached.data; try { const url = `https://${GINGR_SUBDOMAIN}.gingrapp.com/api/v1/animals`; const formBody = new URLSearchParams({ key: GINGR_API_KEY, id_animal: id }).toString(); const response = await axios.post(url, formBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }); const raw = response.data; if (raw.error) return null; const arr = raw.data ? Object.values(raw.data) : []; const animal = arr[0] || null; cache.set(cacheKey, { ts: Date.now(), data: animal }); return animal; } catch (err) { console.error('fetchAnimalFull error:', err.message); return null; } }
+async function enrichReservations(reservations) { return Promise.all(reservations.map(async (r) => { const a = await fetchAnimalFull(r.animal && r.animal.id); if (a) r._fullAnimal = a; return r; })); }
+app.get('/in-house', async (req, res) => { try { const _r = await callGingr({ checked_in: 'true' }); const reservations = await enrichReservations(_r); const dogs = reservations.filter(r => r.check_in_date && !r.check_out_date).map(r => transformReservation(r, 'checkInTime')).sort((a, b) => (a.name || '').localeCompare(b.name || '')); res.json(dogs); } catch (err) { console.error('in-house error:', err.message); res.status(500).json({ error: err.message }); } });
 // ---------- Start ----------
 app.listen(PORT, () => {
   console.log(`Down Dog Lodge whiteboard running on port ${PORT}`);
