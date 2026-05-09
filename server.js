@@ -203,4 +203,3 @@ app.listen(PORT, () => {
   console.log(`Gingr subdomain: ${GINGR_SUBDOMAIN}.gingrapp.com`);
   console.log(`API key configured: ${!!GINGR_API_KEY}`);
 });
-{ console.error('queue-checkout error:', err.message); res.status(500).json({error:err.message}); } });
