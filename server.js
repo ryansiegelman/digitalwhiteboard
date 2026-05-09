@@ -30,7 +30,7 @@ const cache = new Map();
 // ---------- Middleware ----------
 app.use(cors({ origin: '*' }));
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public', { index: 'dashboard.html' }));
 
 // ---------- Helpers ----------
 
@@ -149,7 +149,7 @@ app.get('/checkins', async (req, res) => {
 });
 
 // Recently checked-out dogs: pull today's reservations, filter by check_out_date in last 10 min
-app.get('/checkouts', async (req, res) => {
+app.get('/dogs', async (req, res) => {
   try {
     // Use today's date for the date range (Gingr requires it when checked_in=false)
     const today = new Date().toISOString().split('T')[0];
