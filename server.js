@@ -19,7 +19,7 @@ const LOCATIONS = {
 };
 
 // Cache: hold Gingr responses for 4 sec
-const CACHE_TTL_MS = 4 * 1000;
+const CACHE_TTL_MS = 1 * 1000;
 const cache = new Map();
 
 // Animal cache (image lookups) - longer TTL since images don't change often
